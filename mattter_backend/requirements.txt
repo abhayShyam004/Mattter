@@ -8,3 +8,5 @@ psycopg2-binary
 channels
 daphne
 djangorestframework-gis
+gunicorn
+whitenoise
