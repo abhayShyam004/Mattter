@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import { MapPin, Loader, Search, Star } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import { API_BASE_URL } from '../config';
+import { useAuth } from '../context/AuthContext';
 
 // Fix for default marker icons
 delete L.Icon.Default.prototype._getIconUrl;
@@ -45,14 +47,24 @@ function SetViewOnLocation({ coords }) {
 }
 
 const CatalystSearch = () => {
-    const [catalysts, setCatalysts] = useState([]);
-    const [filteredCatalysts, setFilteredCatalysts] = useState([]);
+    const { user } = useAuth();
+    const navigate = useNavigate();
+    const [allCatalysts, setAllCatalysts] = useState([]); // All catalysts for map
+    const [nearbyCatalysts, setNearbyCatalysts] = useState([]); // Catalysts within 10km for list
+    const [filteredCatalysts, setFilteredCatalysts] = useState([]); // Filtered nearby catalysts
     const [userLocation, setUserLocation] = useState(null);
     const [loadingLocation, setLoadingLocation] = useState(true);
     const [loadingCatalysts, setLoadingCatalysts] = useState(false);
     const [locationError, setLocationError] = useState(null);
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedCatalyst, setSelectedCatalyst] = useState(null);
+
+    // Redirect catalysts to their dashboard
+    useEffect(() => {
+        if (user && user.role === 'CATALYST') {
+            navigate('/catalyst');
+        }
+    }, [user, navigate]);
 
     // Request user location
     useEffect(() => {
@@ -87,7 +99,19 @@ const CatalystSearch = () => {
         setLoadingCatalysts(true);
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch(
+
+            // Fetch all catalysts for map (no radius limit)
+            const allResponse = await fetch(
+                `${API_BASE_URL}/api/profiles/?role=CATALYST`,
+                {
+                    headers: {
+                        'Authorization': token ? `Token ${token}` : '',
+                    },
+                }
+            );
+
+            // Fetch nearby catalysts (10km) for list
+            const nearbyResponse = await fetch(
                 `${API_BASE_URL}/api/profiles/?role=CATALYST&lat=${location.latitude}&lon=${location.longitude}&radius=10000`,
                 {
                     headers: {
@@ -96,10 +120,16 @@ const CatalystSearch = () => {
                 }
             );
 
-            if (response.ok) {
-                const data = await response.json();
-                setCatalysts(data);
-                setFilteredCatalysts(data);
+            if (allResponse.ok && nearbyResponse.ok) {
+                const allData = await allResponse.json();
+                const nearbyData = await nearbyResponse.json();
+
+                // Filter out catalysts without location for map
+                const catalystsWithLocation = allData.filter(c => c.latitude && c.longitude);
+
+                setAllCatalysts(catalystsWithLocation);
+                setNearbyCatalysts(nearbyData);
+                setFilteredCatalysts(nearbyData);
             } else {
                 console.error('Failed to fetch catalysts');
             }
@@ -110,12 +140,12 @@ const CatalystSearch = () => {
         }
     };
 
-    // Filter catalysts based on search
+    // Filter nearby catalysts based on search
     useEffect(() => {
         if (searchQuery.trim() === '') {
-            setFilteredCatalysts(catalysts);
+            setFilteredCatalysts(nearbyCatalysts);
         } else {
-            const filtered = catalysts.filter(catalyst => {
+            const filtered = nearbyCatalysts.filter(catalyst => {
                 const searchLower = searchQuery.toLowerCase();
                 const matchesName = catalyst.user?.username?.toLowerCase().includes(searchLower);
                 const matchesBio = catalyst.bio?.toLowerCase().includes(searchLower);
@@ -126,7 +156,7 @@ const CatalystSearch = () => {
             });
             setFilteredCatalysts(filtered);
         }
-    }, [searchQuery, catalysts]);
+    }, [searchQuery, nearbyCatalysts]);
 
     // Calculate distance in km
     const formatDistance = (lat1, lon1, lat2, lon2) => {
@@ -313,8 +343,8 @@ const CatalystSearch = () => {
                                 </Popup>
                             </Marker>
 
-                            {/* Catalyst Markers */}
-                            {filteredCatalysts.map((catalyst) => {
+                            {/* Catalyst Markers - Show ALL catalysts */}
+                            {allCatalysts.map((catalyst) => {
                                 if (!catalyst.latitude || !catalyst.longitude) return null;
                                 return (
                                     <Marker

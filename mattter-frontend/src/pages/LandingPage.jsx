@@ -362,7 +362,8 @@ const LandingPage = () => {
                         </div>
                     )}
 
-                    {userLocation && !locationError && (
+                    {/* Only show Explore All Catalysts for non-catalyst users */}
+                    {userLocation && !locationError && (!user || user.role !== 'CATALYST') && (
                         <div className="mt-8 text-center">
                             <Link
                                 to="/search"

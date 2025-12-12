@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { UserPlus, Sparkles } from 'lucide-react';
+import { API_BASE_URL } from '../config';
 
 const Register = () => {
     const [formData, setFormData] = useState({
@@ -25,7 +26,48 @@ const Register = () => {
         setError('');
         try {
             await register(formData);
-            navigate(formData.role === 'SEEKER' ? '/onboarding' : '/catalyst');
+
+            // If registering as a catalyst, capture and save location
+            if (formData.role === 'CATALYST') {
+                // Request location permission
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(
+                        async (position) => {
+                            // Save location to profile
+                            try {
+                                const token = localStorage.getItem('token');
+                                await fetch(`${API_BASE_URL}/api/profiles/me/`, {
+                                    method: 'PATCH',
+                                    headers: {
+                                        'Authorization': `Token ${token}`,
+                                        'Content-Type': 'application/json'
+                                    },
+                                    body: JSON.stringify({
+                                        latitude: position.coords.latitude,
+                                        longitude: position.coords.longitude
+                                    })
+                                });
+                                console.log('Location saved:', position.coords.latitude, position.coords.longitude);
+                            } catch (locationError) {
+                                console.error('Failed to save location:', locationError);
+                            }
+                            // Navigate to dashboard
+                            navigate('/catalyst');
+                        },
+                        (error) => {
+                            console.log('Location permission denied or failed:', error.message);
+                            // Still navigate even if location fails
+                            navigate('/catalyst');
+                        }
+                    );
+                } else {
+                    // Geolocation not supported, navigate anyway
+                    navigate('/catalyst');
+                }
+            } else {
+                // For seekers, go to onboarding
+                navigate('/onboarding');
+            }
         } catch (err) {
             setError('Registration failed. Username might be taken.');
         }

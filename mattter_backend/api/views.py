@@ -81,7 +81,7 @@ class ProfileViewSet(viewsets.ModelViewSet):
                 return Response(serializer.data)
         return Response({"detail": "Not authenticated"}, status=401)
 
-    @action(detail=False, methods=['GET'])
+    @action(detail=False, methods=['GET'], permission_classes=[permissions.AllowAny])
     def nearby_catalysts(self, request):
         """
         Get nearby catalysts based on user location.
