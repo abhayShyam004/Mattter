@@ -17,6 +17,7 @@ import {
     ChevronLeft
 } from 'lucide-react';
 import axios from 'axios';
+import { API_BASE_URL } from '../config';
 
 const SeekerOnboarding = () => {
     const navigate = useNavigate();
@@ -87,7 +88,7 @@ const SeekerOnboarding = () => {
         try {
             const token = localStorage.getItem('token');
             await axios.put(
-                'http://localhost:8000/api/profiles/update_preferences/',
+                `${API_BASE_URL}/api/profiles/update_preferences/`,
                 formData,
                 {
                     headers: {

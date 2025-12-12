@@ -3,6 +3,7 @@ import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import { MapPin, Loader, Search, Star } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
+import { API_BASE_URL } from '../config';
 
 // Fix for default marker icons
 delete L.Icon.Default.prototype._getIconUrl;
@@ -87,7 +88,7 @@ const CatalystSearch = () => {
         try {
             const token = localStorage.getItem('token');
             const response = await fetch(
-                `http://localhost:8000/api/profiles/?role=CATALYST&lat=${location.latitude}&lon=${location.longitude}&radius=10000`,
+                `${API_BASE_URL}/api/profiles/?role=CATALYST&lat=${location.latitude}&lon=${location.longitude}&radius=10000`,
                 {
                     headers: {
                         'Authorization': token ? `Token ${token}` : '',

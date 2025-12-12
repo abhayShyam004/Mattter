@@ -1,5 +1,6 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import axios from 'axios';
+import { API_BASE_URL } from '../config';
 
 const AuthContext = createContext(null);
 
@@ -18,7 +19,7 @@ export const AuthProvider = ({ children }) => {
             if (token) {
                 try {
                     // Verify token and get user details
-                    const response = await axios.get('http://127.0.0.1:8000/api/profiles/me/');
+                    const response = await axios.get(`${API_BASE_URL}/api/profiles/me/`);
                     setUser(response.data);
                 } catch (error) {
                     console.error("Auth init failed:", error);
@@ -32,7 +33,7 @@ export const AuthProvider = ({ children }) => {
 
     const login = async (username, password) => {
         try {
-            const response = await axios.post('http://127.0.0.1:8000/api/login/', { username, password });
+            const response = await axios.post(`${API_BASE_URL}/api/login/`, { username, password });
             const { token: newToken } = response.data;
 
             localStorage.setItem('token', newToken);
@@ -40,7 +41,7 @@ export const AuthProvider = ({ children }) => {
             axios.defaults.headers.common['Authorization'] = `Token ${newToken}`;
 
             // Fetch user profile immediately
-            const profileRes = await axios.get('http://127.0.0.1:8000/api/profiles/me/');
+            const profileRes = await axios.get(`${API_BASE_URL}/api/profiles/me/`);
             setUser(profileRes.data);
             return profileRes.data; // Return user data for redirect logic
         } catch (error) {
@@ -51,7 +52,7 @@ export const AuthProvider = ({ children }) => {
 
     const register = async (userData) => {
         try {
-            const response = await axios.post('http://127.0.0.1:8000/api/register/', userData);
+            const response = await axios.post(`${API_BASE_URL}/api/register/`, userData);
             const { token: newToken } = response.data;
 
             localStorage.setItem('token', newToken);
@@ -59,7 +60,7 @@ export const AuthProvider = ({ children }) => {
             axios.defaults.headers.common['Authorization'] = `Token ${newToken}`;
 
             // Fetch user profile
-            const profileRes = await axios.get('http://127.0.0.1:8000/api/profiles/me/');
+            const profileRes = await axios.get(`${API_BASE_URL}/api/profiles/me/`);
             setUser(profileRes.data);
             return true;
         } catch (error) {

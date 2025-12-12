@@ -4,6 +4,7 @@ import {
     MapPin, Star, CheckCircle, XCircle, Mail, Phone,
     Clock, ArrowLeft, Send, Image as ImageIcon, Loader
 } from 'lucide-react';
+import { API_BASE_URL } from '../config';
 
 const CatalystProfile = () => {
     const { id } = useParams();
@@ -23,7 +24,7 @@ const CatalystProfile = () => {
     const fetchCatalystProfile = async () => {
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch(`http://localhost:8000/api/profiles/${id}/`, {
+            const response = await fetch(`${API_BASE_URL}/api/profiles/${id}/`, {
                 headers: {
                     'Authorization': token ? `Token ${token}` : ''
                 }
@@ -56,7 +57,7 @@ const CatalystProfile = () => {
             // Fetch seeker preferences
             let seekerPreferences = {};
             try {
-                const prefResponse = await fetch('http://localhost:8000/api/profiles/get_preferences/', {
+                const prefResponse = await fetch(`${API_BASE_URL}/api/profiles/get_preferences/`, {
                     headers: {
                         'Authorization': `Token ${token}`
                     }
@@ -81,7 +82,7 @@ const CatalystProfile = () => {
             console.log('Sending booking request with data:', JSON.stringify(bookingData, null, 2));
             console.log('Catalyst object:', JSON.stringify(catalyst, null, 2));
 
-            const response = await fetch('http://localhost:8000/api/bookings/', {
+            const response = await fetch(`${API_BASE_URL}/api/bookings/`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Token ${token}`,
@@ -418,3 +419,7 @@ const CatalystProfile = () => {
 };
 
 export default CatalystProfile;
+
+
+
+

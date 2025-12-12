@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { XCircle, Send, MessageCircle, Loader, Info } from 'lucide-react';
 import axios from 'axios';
+import { API_BASE_URL } from '../config';
 
 const MessagingModal = ({ booking, onClose, currentUser }) => {
     const [messages, setMessages] = useState([]);
@@ -14,12 +15,12 @@ const MessagingModal = ({ booking, onClose, currentUser }) => {
     // Fetch messages
     const fetchMessages = async () => {
         try {
-            const response = await axios.get(`http://127.0.0.1:8000/api/messages/?booking_id=${booking.id}`);
+            const response = await axios.get(`${API_BASE_URL}/api/messages/?booking_id=${booking.id}`);
             setMessages(response.data);
             setLoading(false);
 
             // Mark messages as read
-            await axios.post('http://127.0.0.1:8000/api/messages/mark_as_read/', {
+            await axios.post(`${API_BASE_URL}/api/messages/mark_as_read/`, {
                 booking_id: booking.id
             });
         } catch (error) {
@@ -35,7 +36,7 @@ const MessagingModal = ({ booking, onClose, currentUser }) => {
 
         setSending(true);
         try {
-            await axios.post('http://127.0.0.1:8000/api/messages/', {
+            await axios.post(`${API_BASE_URL}/api/messages/`, {
                 booking: booking.id,
                 content: newMessage.trim()
             });
@@ -131,8 +132,8 @@ const MessagingModal = ({ booking, onClose, currentUser }) => {
                                 >
                                     <div
                                         className={`max-w-[70%] rounded-2xl px-4 py-2 ${isCurrentUser
-                                                ? 'bg-gradient-to-r from-accent-purple to-accent-pink text-white'
-                                                : 'bg-dark-elevated text-text-primary'
+                                            ? 'bg-gradient-to-r from-accent-purple to-accent-pink text-white'
+                                            : 'bg-dark-elevated text-text-primary'
                                             }`}
                                     >
                                         <p className="text-sm mb-1">{message.content}</p>

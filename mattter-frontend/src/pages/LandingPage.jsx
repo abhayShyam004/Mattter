@@ -5,6 +5,7 @@ import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import { Sparkles, Users, MapPin, Zap, Heart, Calendar, ChevronRight } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
+import { API_BASE_URL } from '../config';
 
 // Fix for default marker icons in React-Leaflet
 delete L.Icon.Default.prototype._getIconUrl;
@@ -68,7 +69,7 @@ const LandingPage = () => {
 
         try {
             const response = await fetch(
-                `http://localhost:8000/api/profiles/nearby_catalysts/?lat=${userLocation.latitude}&lon=${userLocation.longitude}&radius=20000000`,
+                `${API_BASE_URL}/api/profiles/nearby_catalysts/?lat=${userLocation.latitude}&lon=${userLocation.longitude}&radius=20000000`,
                 {
                     method: 'GET',
                     headers: {

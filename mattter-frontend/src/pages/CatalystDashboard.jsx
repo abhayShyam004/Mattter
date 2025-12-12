@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { User, MapPin, Heart, Calendar, Image, X, Plus, Check, Clock, Sparkles, XCircle, Trash2 } from 'lucide-react';
-
+import { API_BASE_URL } from '../config';
 const CatalystDashboard = () => {
     const { user } = useAuth();
     const [profile, setProfile] = useState(null);
@@ -70,7 +70,7 @@ const CatalystDashboard = () => {
 
     const fetchProfile = async () => {
         try {
-            const response = await fetch('http://localhost:8000/api/profiles/me/', {
+            const response = await fetch(`${API_BASE_URL}/api/profiles/me/`, {
                 headers: {
                     'Authorization': `Token ${localStorage.getItem('token')}`
                 }
@@ -106,7 +106,7 @@ const CatalystDashboard = () => {
 
     const fetchIncomingRequests = async () => {
         try {
-            const response = await fetch('http://localhost:8000/api/bookings/?status=REQUESTED', {
+            const response = await fetch(`${API_BASE_URL}/api/bookings/?status=REQUESTED`, {
                 headers: {
                     'Authorization': `Token ${localStorage.getItem('token')}`
                 }
@@ -120,7 +120,7 @@ const CatalystDashboard = () => {
 
     const fetchMatchedSeekers = async () => {
         try {
-            const response = await fetch('http://localhost:8000/api/bookings/?status=CONFIRMED,COMPLETED', {
+            const response = await fetch(`${API_BASE_URL}/api/bookings/?status=CONFIRMED,COMPLETED`, {
                 headers: {
                     'Authorization': `Token ${localStorage.getItem('token')}`
                 }
@@ -156,7 +156,7 @@ const CatalystDashboard = () => {
 
         console.log('Saving profile with data:', dataToSave);
         try {
-            const response = await fetch('http://localhost:8000/api/profiles/me/', {
+            const response = await fetch(`${API_BASE_URL}/api/profiles/me/`, {
                 method: 'PATCH',
                 headers: {
                     'Authorization': `Token ${localStorage.getItem('token')}`,
@@ -235,7 +235,7 @@ const CatalystDashboard = () => {
         setFormData({ ...formData, is_active: newActiveState });
 
         try {
-            await fetch('http://localhost:8000/api/profiles/me/', {
+            await fetch(`${API_BASE_URL}/api/profiles/me/`, {
                 method: 'PATCH',
                 headers: {
                     'Authorization': `Token ${localStorage.getItem('token')}`,
@@ -250,7 +250,7 @@ const CatalystDashboard = () => {
 
     const handleAcceptRequest = async (requestId) => {
         try {
-            const response = await fetch(`http://localhost:8000/api/bookings/${requestId}/accept_request/`, {
+            const response = await fetch(`${API_BASE_URL}/api/bookings/${requestId}/accept_request/`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Token ${localStorage.getItem('token')}`,
@@ -276,7 +276,7 @@ const CatalystDashboard = () => {
 
     const handleRejectRequest = async (requestId) => {
         try {
-            const response = await fetch(`http://localhost:8000/api/bookings/${requestId}/reject_request/`, {
+            const response = await fetch(`${API_BASE_URL}/api/bookings/${requestId}/reject_request/`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Token ${localStorage.getItem('token')}`,
@@ -304,7 +304,7 @@ const CatalystDashboard = () => {
         if (!seekerToRemove) return;
 
         try {
-            const response = await fetch(`http://localhost:8000/api/bookings/${seekerToRemove.id}/delete_booking/`, {
+            const response = await fetch(`${API_BASE_URL}/api/bookings/${seekerToRemove.id}/delete_booking/`, {
                 method: 'DELETE',
                 headers: {
                     'Authorization': `Token ${localStorage.getItem('token')}`
@@ -1106,7 +1106,7 @@ const CatalystDashboard = () => {
                                     <button
                                         onClick={async () => {
                                             try {
-                                                const response = await fetch(`http://localhost:8000/api/bookings/${selectedMatchedSeeker.id}/`, {
+                                                const response = await fetch(`${API_BASE_URL}/api/bookings/${selectedMatchedSeeker.id}/`, {
                                                     method: 'PATCH',
                                                     headers: {
                                                         'Authorization': `Token ${localStorage.getItem('token')}`,
@@ -1135,7 +1135,7 @@ const CatalystDashboard = () => {
                                     <button
                                         onClick={async () => {
                                             try {
-                                                const response = await fetch(`http://localhost:8000/api/bookings/${selectedMatchedSeeker.id}/`, {
+                                                const response = await fetch(`${API_BASE_URL}/api/bookings/${selectedMatchedSeeker.id}/`, {
                                                     method: 'PATCH',
                                                     headers: {
                                                         'Authorization': `Token ${localStorage.getItem('token')}`,
@@ -1211,3 +1211,7 @@ const CatalystDashboard = () => {
 };
 
 export default CatalystDashboard;
+
+
+
+

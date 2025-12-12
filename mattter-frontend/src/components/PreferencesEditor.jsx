@@ -15,6 +15,7 @@ import {
     Loader2
 } from 'lucide-react';
 import axios from 'axios';
+import { API_BASE_URL } from '../config';
 
 const PreferencesEditor = ({ onClose }) => {
     const [isEditing, setIsEditing] = useState(false);
@@ -39,7 +40,7 @@ const PreferencesEditor = ({ onClose }) => {
         try {
             const token = localStorage.getItem('token');
             const response = await axios.get(
-                'http://localhost:8000/api/profiles/get_preferences/',
+                `${API_BASE_URL}/api/profiles/get_preferences/`,
                 {
                     headers: {
                         'Authorization': `Token ${token}`
@@ -84,7 +85,7 @@ const PreferencesEditor = ({ onClose }) => {
         try {
             const token = localStorage.getItem('token');
             await axios.put(
-                'http://localhost:8000/api/profiles/update_preferences/',
+                `${API_BASE_URL}/api/profiles/update_preferences/`,
                 formData,
                 {
                     headers: {
@@ -177,8 +178,8 @@ const PreferencesEditor = ({ onClose }) => {
                             <div
                                 onClick={isEditing ? () => handleConsultationTypeToggle('physical') : undefined}
                                 className={`p-6 rounded-xl border-2 transition-all ${formData.consultation_type.includes('physical')
-                                        ? 'bg-accent-purple/20 border-accent-purple'
-                                        : 'bg-dark-elevated border-dark-border'
+                                    ? 'bg-accent-purple/20 border-accent-purple'
+                                    : 'bg-dark-elevated border-dark-border'
                                     } ${isEditing ? 'cursor-pointer hover:border-accent-purple/50' : 'opacity-75'}`}
                             >
                                 <Users className="w-10 h-10 text-accent-purple mb-3" />
@@ -191,8 +192,8 @@ const PreferencesEditor = ({ onClose }) => {
                             <div
                                 onClick={isEditing ? () => handleConsultationTypeToggle('online') : undefined}
                                 className={`p-6 rounded-xl border-2 transition-all ${formData.consultation_type.includes('online')
-                                        ? 'bg-accent-blue/20 border-accent-blue'
-                                        : 'bg-dark-elevated border-dark-border'
+                                    ? 'bg-accent-blue/20 border-accent-blue'
+                                    : 'bg-dark-elevated border-dark-border'
                                     } ${isEditing ? 'cursor-pointer hover:border-accent-blue/50' : 'opacity-75'}`}
                             >
                                 <Laptop className="w-10 h-10 text-accent-blue mb-3" />
@@ -211,8 +212,8 @@ const PreferencesEditor = ({ onClose }) => {
                             <div
                                 onClick={isEditing ? () => handleServiceScopeChange('complete_rebranding') : undefined}
                                 className={`p-6 rounded-xl border-2 transition-all ${formData.service_scope === 'complete_rebranding'
-                                        ? 'bg-accent-pink/20 border-accent-pink'
-                                        : 'bg-dark-elevated border-dark-border'
+                                    ? 'bg-accent-pink/20 border-accent-pink'
+                                    : 'bg-dark-elevated border-dark-border'
                                     } ${isEditing ? 'cursor-pointer hover:border-accent-pink/50' : 'opacity-75'}`}
                             >
                                 <div className="flex items-start justify-between mb-4">
@@ -243,8 +244,8 @@ const PreferencesEditor = ({ onClose }) => {
                             <div
                                 onClick={isEditing ? () => handleServiceScopeChange('wardrobe_only') : undefined}
                                 className={`p-6 rounded-xl border-2 transition-all ${formData.service_scope === 'wardrobe_only'
-                                        ? 'bg-accent-gold/20 border-accent-gold'
-                                        : 'bg-dark-elevated border-dark-border'
+                                    ? 'bg-accent-gold/20 border-accent-gold'
+                                    : 'bg-dark-elevated border-dark-border'
                                     } ${isEditing ? 'cursor-pointer hover:border-accent-gold/50' : 'opacity-75'}`}
                             >
                                 <div className="flex items-start justify-between">
@@ -275,8 +276,8 @@ const PreferencesEditor = ({ onClose }) => {
                                         disabled={!isEditing}
                                         onClick={() => setFormData(prev => ({ ...prev, budget_catalyst: range }))}
                                         className={`p-4 rounded-lg border-2 transition-all ${formData.budget_catalyst === range
-                                                ? 'bg-accent-purple/20 border-accent-purple text-accent-purple'
-                                                : 'bg-dark-elevated border-dark-border text-text-secondary'
+                                            ? 'bg-accent-purple/20 border-accent-purple text-accent-purple'
+                                            : 'bg-dark-elevated border-dark-border text-text-secondary'
                                             } ${isEditing ? 'hover:border-accent-purple/50 cursor-pointer' : 'opacity-75 cursor-not-allowed'}`}
                                     >
                                         <div className="font-semibold">
@@ -302,8 +303,8 @@ const PreferencesEditor = ({ onClose }) => {
                                         disabled={!isEditing}
                                         onClick={() => setFormData(prev => ({ ...prev, budget_personal: range }))}
                                         className={`p-4 rounded-lg border-2 transition-all ${formData.budget_personal === range
-                                                ? 'bg-accent-pink/20 border-accent-pink text-accent-pink'
-                                                : 'bg-dark-elevated border-dark-border text-text-secondary'
+                                            ? 'bg-accent-pink/20 border-accent-pink text-accent-pink'
+                                            : 'bg-dark-elevated border-dark-border text-text-secondary'
                                             } ${isEditing ? 'hover:border-accent-pink/50 cursor-pointer' : 'opacity-75 cursor-not-allowed'}`}
                                     >
                                         <div className="font-semibold">₹{range}</div>
