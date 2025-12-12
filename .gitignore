@@ -1,0 +1,35 @@
+# Root .gitignore for Mattter Project
+
+# Backend
+mattter_backend/__pycache__/
+mattter_backend/*.pyc
+mattter_backend/db.sqlite3
+mattter_backend/media/
+mattter_backend/staticfiles/
+
+# Frontend
+mattter-frontend/node_modules/
+mattter-frontend/dist/
+mattter-frontend/build/
+
+# Environment files
+.env
+.env.local
+*.env
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Batch files (optional - uncomment if you don't want to share run scripts)
+# run_backend.bat
+# run_frontend.bat

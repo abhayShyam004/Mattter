@@ -1,0 +1,10 @@
+Django>=5.0
+djangorestframework
+django-filter
+django-cors-headers
+python-dotenv
+Pillow
+psycopg2-binary
+channels
+daphne
+djangorestframework-gis
