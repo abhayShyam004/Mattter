@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { User, MapPin, Heart, Calendar, Image, X, Plus, Check, Clock, Sparkles, XCircle, Trash2 } from 'lucide-react';
+import { User, MapPin, Heart, Calendar, Image, X, Plus, Check, Clock, Sparkles, XCircle, Trash2, Star } from 'lucide-react';
 import { API_BASE_URL } from '../config';
 const CatalystDashboard = () => {
     const { user } = useAuth();
