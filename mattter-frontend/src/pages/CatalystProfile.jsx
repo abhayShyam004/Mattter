@@ -5,6 +5,7 @@ import {
     Clock, ArrowLeft, Send, Image as ImageIcon, Loader
 } from 'lucide-react';
 import { API_BASE_URL } from '../config';
+import StarRating from '../components/StarRating';
 
 const CatalystProfile = () => {
     const { id } = useParams();
@@ -165,9 +166,25 @@ const CatalystProfile = () => {
                                     <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-accent-purple to-accent-pink bg-clip-text text-transparent">
                                         {catalyst.user?.username || 'Unknown Catalyst'}
                                     </h1>
+                                    {/* Gender and Age */}
+                                    {(catalyst.gender || catalyst.age) && (
+                                        <p className="text-text-muted mb-2">
+                                            {catalyst.gender && <span className="capitalize">{catalyst.gender.toLowerCase()}</span>}
+                                            {catalyst.gender && catalyst.age && <span> • </span>}
+                                            {catalyst.age && <span>{catalyst.age} years old</span>}
+                                        </p>
+                                    )}
                                     {catalyst.bio_short && (
                                         <p className="text-xl text-text-secondary italic">"{catalyst.bio_short}"</p>
                                     )}
+                                    {/* Rating */}
+                                    <div className="mt-3">
+                                        <StarRating
+                                            rating={catalyst.average_rating || 0}
+                                            count={catalyst.rating_count || 0}
+                                            size="lg"
+                                        />
+                                    </div>
                                 </div>
                                 {catalyst.is_active ? (
                                     <div className="flex items-center gap-2 px-4 py-2 bg-green-500/20 text-green-400 rounded-full">

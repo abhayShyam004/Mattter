@@ -4,10 +4,10 @@ from rest_framework.response import Response
 from rest_framework import status
 # from django.contrib.gis.geos import Point
 # from django.contrib.gis.db.models.functions import Distance
-from .models import User, Profile, WardrobeItem, Service, Booking, Message
+from .models import User, Profile, WardrobeItem, Service, Booking, Message, Rating
 from .serializers import (
     UserSerializer, ProfileSerializer, WardrobeItemSerializer, 
-    ServiceSerializer, BookingSerializer, MessageSerializer
+    ServiceSerializer, BookingSerializer, MessageSerializer, RatingSerializer
 )
 
 class ProfileViewSet(viewsets.ModelViewSet):
@@ -138,7 +138,9 @@ class ProfileViewSet(viewsets.ModelViewSet):
                         'longitude': catalyst.longitude,
                         'specializations': catalyst.specializations,
                         'hourly_rate': str(catalyst.hourly_rate) if catalyst.hourly_rate else None,
-                        'distance': round(distance)  # Distance in meters
+                        'distance': round(distance),  # Distance in meters
+                        'average_rating': float(catalyst.average_rating),
+                        'rating_count': catalyst.rating_count,
                     })
             
             # Sort by distance
@@ -401,20 +403,28 @@ class BookingViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['DELETE'], permission_classes=[permissions.IsAuthenticated])
     def delete_booking(self, request, pk=None):
         """
-        Delete/Cancel a confirmed or completed booking (catalyst only).
-        Marks the booking as CANCELLED to remove it from the matched seekers list.
+        Delete/Cancel a booking.
+        - Seekers can delete REQUESTED bookings (pending requests)
+        - Catalysts can delete CONFIRMED or COMPLETED bookings (matched seekers)
         """
         booking = self.get_object()
         
-        # Ensure the user is the catalyst for this booking
-        if booking.catalyst != request.user:
-            return Response(
-                {"error": "You are not authorized to delete this booking"},
-                status=status.HTTP_403_FORBIDDEN
-            )
-        
-        # Only allow deleting CONFIRMED or COMPLETED bookings
-        if booking.status not in ['CONFIRMED', 'COMPLETED']:
+        # Check authorization based on user role and booking status
+        if booking.status == 'REQUESTED':
+            # Seeker can delete their own pending requests
+            if booking.seeker != request.user:
+                return Response(
+                    {"error": "You are not authorized to delete this booking"},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+        elif booking.status in ['CONFIRMED', 'COMPLETED']:
+            # Catalyst can delete matched seekers
+            if booking.catalyst != request.user:
+                return Response(
+                    {"error": "You are not authorized to delete this booking"},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+        else:
             return Response(
                 {"error": f"Cannot delete booking with status {booking.status}"},
                 status=status.HTTP_400_BAD_REQUEST
@@ -486,4 +496,33 @@ class MessageViewSet(viewsets.ModelViewSet):
             "success": True,
             "marked_read": count
         })
+
+class RatingViewSet(viewsets.ModelViewSet):
+    """
+    API endpoint for ratings.
+    """
+    serializer_class = RatingSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        """
+        Return ratings given by the user or received by the user (if catalyst).
+        """
+        user = self.request.user
+        queryset = Rating.objects.all()
+        
+        # Filter by catalyst if specified
+        catalyst_id = self.request.query_params.get('catalyst_id')
+        if catalyst_id:
+            queryset = queryset.filter(catalyst_id=catalyst_id)
+        
+        # Filter by seeker if specified
+        seeker_id = self.request.query_params.get('seeker_id')
+        if seeker_id:
+            queryset = queryset.filter(seeker_id=seeker_id)
+        
+        return queryset
+
+    def perform_create(self, serializer):
+        serializer.save(seeker=self.request.user)
 

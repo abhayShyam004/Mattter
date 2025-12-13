@@ -1,15 +1,16 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from rest_framework.authtoken.views import obtain_auth_token
-from .views import ProfileViewSet, WardrobeItemViewSet, ServiceViewSet, BookingViewSet, MessageViewSet
+from .views import ProfileViewSet, WardrobeItemViewSet, ServiceViewSet, BookingViewSet, MessageViewSet, RatingViewSet
 from .auth_views import RegisterView
 
 router = DefaultRouter()
 router.register(r'profiles', ProfileViewSet, basename='profile')
 router.register(r'wardrobe', WardrobeItemViewSet, basename='wardrobe')
-router.register (r'services', ServiceViewSet)
+router.register(r'services', ServiceViewSet)
 router.register(r'bookings', BookingViewSet, basename='booking')
 router.register(r'messages', MessageViewSet, basename='message')
+router.register(r'ratings', RatingViewSet, basename='rating')
 
 urlpatterns = [
     path('', include(router.urls)),

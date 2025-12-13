@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import User, Profile, WardrobeItem, Service, Booking, Message
+from .models import User, Profile, WardrobeItem, Service, Booking, Message, Rating
 # from rest_framework_gis.serializers import GeoFeatureModelSerializer
 
 class UserSerializer(serializers.ModelSerializer):
@@ -19,11 +19,23 @@ class UserWithProfileSerializer(serializers.ModelSerializer):
         try:
             profile = obj.profile
             return {
+                'id': profile.id,
+                'role': profile.role,
                 'gender': profile.gender,
                 'age': profile.age,
+                'bio': profile.bio,
+                'bio_short': profile.bio_short,
                 'address': profile.address,
+                'latitude': profile.latitude,
+                'longitude': profile.longitude,
+                'hourly_rate': str(profile.hourly_rate) if profile.hourly_rate else None,
+                'specializations': profile.specializations,
+                'portfolio_images': profile.portfolio_images,
+                'is_active': profile.is_active,
                 'style_goals': profile.style_goals,
                 'preferences': profile.preferences,
+                'average_rating': str(profile.average_rating),
+                'rating_count': profile.rating_count,
             }
         except Profile.DoesNotExist:
             return None
@@ -37,9 +49,9 @@ class ProfileSerializer(serializers.ModelSerializer):
             'id', 'user', 'role', 'gender', 'age', 'bio', 'bio_short', 'is_active',
             'latitude', 'longitude', 'address',
             'hourly_rate', 'specializations', 'portfolio_images',
-            'style_goals', 'preferences'
+            'style_goals', 'preferences', 'average_rating', 'rating_count'
         ]
-        read_only_fields = ['id', 'user']
+        read_only_fields = ['id', 'user', 'average_rating', 'rating_count']
 
 class WardrobeItemSerializer(serializers.ModelSerializer):
     class Meta:
@@ -108,4 +120,34 @@ class MessageSerializer(serializers.ModelSerializer):
             **validated_data
         )
         return message
+
+class RatingSerializer(serializers.ModelSerializer):
+    seeker = UserSerializer(read_only=True)
+    catalyst = UserSerializer(read_only=True)
+    seeker_id = serializers.IntegerField(write_only=True, required=False)
+    catalyst_id = serializers.IntegerField(write_only=True, required=True)
+    booking_id = serializers.IntegerField(write_only=True, required=False, allow_null=True)
+    
+    class Meta:
+        model = Rating
+        fields = ['id', 'seeker', 'catalyst', 'seeker_id', 'catalyst_id', 'booking', 'booking_id', 
+                  'rating', 'review', 'created_at', 'updated_at']
+        read_only_fields = ['seeker', 'catalyst', 'booking', 'created_at', 'updated_at']
+    
+    def create(self, validated_data):
+        # Use seeker from context if not provided
+        seeker_id = validated_data.pop('seeker_id', None)
+        if not seeker_id:
+            seeker_id = self.context['request'].user.id
+        
+        catalyst_id = validated_data.pop('catalyst_id')
+        booking_id = validated_data.pop('booking_id', None)
+        
+        rating = Rating.objects.create(
+            seeker_id=seeker_id,
+            catalyst_id=catalyst_id,
+            booking_id=booking_id,
+            **validated_data
+        )
+        return rating
 

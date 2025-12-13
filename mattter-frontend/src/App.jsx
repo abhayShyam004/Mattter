@@ -7,6 +7,7 @@ import SeekerDashboard from './pages/SeekerDashboard';
 import CatalystDashboard from './pages/CatalystDashboard';
 import CatalystSearch from './pages/CatalystSearch';
 import CatalystProfile from './pages/CatalystProfile';
+import YourCatalysts from './pages/YourCatalysts';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import SeekerOnboarding from './pages/SeekerOnboarding';
@@ -39,6 +40,11 @@ function App() {
                         <Route path="search" element={
                             <ProtectedRoute>
                                 <CatalystSearch />
+                            </ProtectedRoute>
+                        } />
+                        <Route path="catalysts" element={
+                            <ProtectedRoute>
+                                <YourCatalysts />
                             </ProtectedRoute>
                         } />
                         <Route path="catalyst/:id" element={

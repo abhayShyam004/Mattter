@@ -6,6 +6,7 @@ import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import { API_BASE_URL } from '../config';
 import { useAuth } from '../context/AuthContext';
+import StarRating from '../components/StarRating';
 
 // Fix for default marker icons
 delete L.Icon.Default.prototype._getIconUrl;
@@ -281,6 +282,15 @@ const CatalystSearch = () => {
                                     </p>
                                 )}
 
+                                {/* Rating */}
+                                <div className="mb-3">
+                                    <StarRating
+                                        rating={catalyst.average_rating || 0}
+                                        count={catalyst.rating_count || 0}
+                                        size="sm"
+                                    />
+                                </div>
+
                                 {catalyst.specializations && catalyst.specializations.length > 0 && (
                                     <div className="flex flex-wrap gap-2 mb-3">
                                         {catalyst.specializations.slice(0, 3).map((spec, idx) => (
@@ -355,15 +365,43 @@ const CatalystSearch = () => {
                                             click: () => setSelectedCatalyst(catalyst),
                                         }}
                                     >
-                                        <Popup>
-                                            <div className="text-center">
-                                                <strong className="block mb-1">{catalyst.user?.username || 'Unknown'}</strong>
+                                        <Popup className="custom-popup">
+                                            <div className="min-w-[200px]">
+                                                <strong className="block mb-2 text-base">{catalyst.user?.username || 'Unknown'}</strong>
+                                                {(catalyst.gender || catalyst.age) && (
+                                                    <p className="text-xs text-gray-600 mb-2">
+                                                        {catalyst.gender && <span className="capitalize">{catalyst.gender.toLowerCase()}</span>}
+                                                        {catalyst.gender && catalyst.age && <span> • </span>}
+                                                        {catalyst.age && <span>{catalyst.age} years</span>}
+                                                    </p>
+                                                )}
                                                 {catalyst.bio && (
-                                                    <p className="text-sm text-gray-600 mb-1">{catalyst.bio.slice(0, 50)}...</p>
+                                                    <p className="text-sm text-gray-600 mb-2">{catalyst.bio.slice(0, 80)}{catalyst.bio.length > 80 ? '...' : ''}</p>
                                                 )}
+                                                {/* Rating */}
+                                                <div className="mb-2">
+                                                    <StarRating
+                                                        rating={catalyst.average_rating || 0}
+                                                        count={catalyst.rating_count || 0}
+                                                        size="sm"
+                                                    />
+                                                </div>
                                                 {catalyst.hourly_rate && (
-                                                    <p className="text-sm font-semibold text-purple-600">₹{catalyst.hourly_rate} Service Fee</p>
+                                                    <p className="text-sm font-semibold text-purple-600 mb-2">₹{catalyst.hourly_rate} Service Fee</p>
                                                 )}
+                                                {userLocation && (
+                                                    <p className="text-xs text-gray-500 mb-3">
+                                                        {formatDistance(userLocation.latitude, userLocation.longitude, catalyst.latitude, catalyst.longitude)} away
+                                                    </p>
+                                                )}
+                                                <button
+                                                    onClick={() => {
+                                                        window.location.href = `/catalyst/${catalyst.id}`;
+                                                    }}
+                                                    className="w-full px-3 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-sm rounded-lg font-medium hover:shadow-lg transition-all"
+                                                >
+                                                    View Profile
+                                                </button>
                                             </div>
                                         </Popup>
                                     </Marker>

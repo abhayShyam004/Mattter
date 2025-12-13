@@ -48,6 +48,10 @@ class Profile(models.Model):
     style_goals = models.JSONField(default=dict, blank=True)
     preferences = models.JSONField(default=dict, blank=True)
 
+    # Rating fields (for catalysts)
+    average_rating = models.DecimalField(max_digits=3, decimal_places=2, default=0.00, help_text="Average rating out of 5")
+    rating_count = models.PositiveIntegerField(default=0, help_text="Total number of ratings")
+
     def __str__(self):
         return f"{self.user.username} - {self.role}"
 
@@ -105,6 +109,65 @@ class Booking(models.Model):
 
     def __str__(self):
         return f"Booking: {self.seeker.username} with {self.catalyst.username} ({self.status})"
+
+class Rating(models.Model):
+    """
+    Rating given by a seeker to a catalyst after a booking.
+    """
+    seeker = models.ForeignKey(User, on_delete=models.CASCADE, related_name='ratings_given')
+    catalyst = models.ForeignKey(User, on_delete=models.CASCADE, related_name='ratings_received')
+    booking = models.OneToOneField(Booking, on_delete=models.CASCADE, related_name='rating', null=True, blank=True)
+    rating = models.PositiveSmallIntegerField(help_text="Rating from 1-5 stars")
+    review = models.TextField(blank=True, help_text="Optional written review")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ('seeker', 'catalyst', 'booking')
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.seeker.username} rated {self.catalyst.username}: {self.rating}/5"
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        # Update catalyst's average rating
+        self.update_catalyst_rating()
+
+    def delete(self, *args, **kwargs):
+        catalyst = self.catalyst
+        super().delete(*args, **kwargs)
+        # Update catalyst's average rating after deletion
+        self.update_catalyst_rating_for_user(catalyst)
+
+    def update_catalyst_rating(self):
+        """Update the catalyst's average rating and count"""
+        catalyst_profile = self.catalyst.profile
+        ratings = Rating.objects.filter(catalyst=self.catalyst)
+        count = ratings.count()
+        if count > 0:
+            avg = sum(r.rating for r in ratings) / count
+            catalyst_profile.average_rating = round(avg, 2)
+            catalyst_profile.rating_count = count
+        else:
+            catalyst_profile.average_rating = 0.00
+            catalyst_profile.rating_count = 0
+        catalyst_profile.save()
+
+    @staticmethod
+    def update_catalyst_rating_for_user(catalyst):
+        """Update a specific catalyst's rating"""
+        catalyst_profile = catalyst.profile
+        ratings = Rating.objects.filter(catalyst=catalyst)
+        count = ratings.count()
+        if count > 0:
+            avg = sum(r.rating for r in ratings) / count
+            catalyst_profile.average_rating = round(avg, 2)
+            catalyst_profile.rating_count = count
+        else:
+            catalyst_profile.average_rating = 0.00
+            catalyst_profile.rating_count = 0
+        catalyst_profile.save()
 
 class Message(models.Model):
     """

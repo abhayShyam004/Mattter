@@ -1,12 +1,62 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Sparkles, Users, Settings } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import PreferencesEditor from '../components/PreferencesEditor';
+import { API_BASE_URL } from '../config';
 
 const SeekerDashboard = () => {
     const { user } = useAuth();
     const [showPreferences, setShowPreferences] = useState(false);
+    const [stats, setStats] = useState({
+        activeCatalysts: 0,
+        totalBookings: 0,
+        ratingsGiven: 0
+    });
+
+    useEffect(() => {
+        fetchStats();
+    }, []);
+
+    const fetchStats = async () => {
+        try {
+            const token = localStorage.getItem('token');
+
+            // Fetch bookings
+            const bookingsResponse = await fetch(`${API_BASE_URL}/api/bookings/`, {
+                headers: { 'Authorization': `Token ${token}` }
+            });
+
+            if (bookingsResponse.ok) {
+                const bookings = await bookingsResponse.json();
+                const activeCatalysts = bookings.filter(b =>
+                    b.status === 'CONFIRMED' || b.status === 'COMPLETED'
+                ).length;
+
+                setStats(prev => ({
+                    ...prev,
+                    activeCatalysts,
+                    totalBookings: bookings.length
+                }));
+            }
+
+            // Fetch ratings given by this seeker
+            const ratingsResponse = await fetch(`${API_BASE_URL}/api/ratings/?seeker_id=${user.user.id}`, {
+                headers: { 'Authorization': `Token ${token}` }
+            });
+
+            if (ratingsResponse.ok) {
+                const ratings = await ratingsResponse.json();
+                setStats(prev => ({
+                    ...prev,
+                    ratingsGiven: ratings.length
+                }));
+            }
+        } catch (error) {
+            console.error('Error fetching stats:', error);
+        }
+    };
+
     return (
         <div className="min-h-screen flex items-center justify-center px-4 py-12">
             <div className="max-w-4xl w-full">
@@ -116,16 +166,16 @@ const SeekerDashboard = () => {
                 {/* Stats Footer */}
                 <div className="mt-16 grid grid-cols-3 gap-8 text-center">
                     <div>
-                        <p className="text-3xl font-bold text-accent-purple mb-2">0</p>
+                        <p className="text-3xl font-bold text-accent-purple mb-2">{stats.activeCatalysts}</p>
                         <p className="text-text-muted text-sm">Active Catalysts</p>
                     </div>
                     <div>
-                        <p className="text-3xl font-bold text-accent-blue mb-2">0</p>
-                        <p className="text-text-muted text-sm">Bookings</p>
+                        <p className="text-3xl font-bold text-accent-blue mb-2">{stats.totalBookings}</p>
+                        <p className="text-text-muted text-sm">Total Bookings</p>
                     </div>
                     <div>
-                        <p className="text-3xl font-bold text-accent-pink mb-2">0</p>
-                        <p className="text-text-muted text-sm">Reviews</p>
+                        <p className="text-3xl font-bold text-accent-pink mb-2">{stats.ratingsGiven}</p>
+                        <p className="text-text-muted text-sm">Ratings Given</p>
                     </div>
                 </div>
             </div>

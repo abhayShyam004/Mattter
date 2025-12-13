@@ -16,6 +16,8 @@ const CatalystDashboard = () => {
     const [seekerToRemove, setSeekerToRemove] = useState(null);
     const [selectedMatchedSeeker, setSelectedMatchedSeeker] = useState(null);
     const [showMatchedSeekerModal, setShowMatchedSeekerModal] = useState(false);
+    const [isViewing, setIsViewing] = useState(false);
+    const [isEditing, setIsEditing] = useState(false);
 
     // Form state
     const [formData, setFormData] = useState({
@@ -402,6 +404,17 @@ const CatalystDashboard = () => {
                                     <div className="text-2xl font-bold text-accent-pink">{matchedSeekers.length}</div>
                                     <div className="text-xs text-text-secondary">Matches</div>
                                 </div>
+                                <div className="bg-dark-surface/50 backdrop-blur-sm border border-dark-border rounded-xl px-4 py-2">
+                                    <div className="flex items-center gap-1">
+                                        <Star className="w-5 h-5 text-yellow-400 fill-yellow-400" />
+                                        <div className="text-2xl font-bold text-accent-gold">
+                                            {profile?.average_rating ? parseFloat(profile.average_rating).toFixed(1) : '0.0'}
+                                        </div>
+                                    </div>
+                                    <div className="text-xs text-text-secondary">
+                                        {profile?.rating_count || 0} {profile?.rating_count === 1 ? 'Review' : 'Reviews'}
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -409,195 +422,353 @@ const CatalystDashboard = () => {
 
                 {/* Profile Management Card */}
                 <div className="bg-dark-surface border border-dark-border rounded-3xl p-8">
-                    <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
-                        <User className="w-6 h-6 text-accent-purple" />
-                        Profile Management
-                    </h2>
-
-                    <div className="space-y-6">
-                        {/* Short Bio */}
-                        <div>
-                            <label className="block text-sm font-medium mb-2 text-text-secondary">Short Bio / Tagline</label>
-                            <input
-                                type="text"
-                                maxLength={200}
-                                value={formData.bio_short}
-                                onChange={(e) => setFormData({ ...formData, bio_short: e.target.value })}
-                                placeholder="e.g., Award-winning stylist with 10+ years experience"
-                                className="w-full bg-dark-elevated border border-dark-border rounded-xl px-4 py-3 text-text-primary placeholder-text-secondary/50 focus:border-accent-purple focus:ring-2 focus:ring-accent-purple/20 transition-all"
-                            />
-                            <p className="text-xs text-text-secondary mt-1">{formData.bio_short.length}/200 characters</p>
-                        </div>
-
-                        {/* Detailed Bio */}
-                        <div>
-                            <label className="block text-sm font-medium mb-2 text-text-secondary">Detailed Bio</label>
-                            <textarea
-                                rows={6}
-                                value={formData.bio}
-                                onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
-                                placeholder="Tell seekers about your experience, approach, and what makes you unique..."
-                                className="w-full bg-dark-elevated border border-dark-border rounded-xl px-4 py-3 text-text-primary placeholder-text-secondary/50 focus:border-accent-purple focus:ring-2 focus:ring-accent-purple/20 transition-all resize-none"
-                            />
-                        </div>
-
-                        {/* Specializations */}
-                        <div>
-                            <label className="block text-sm font-medium mb-2 text-text-secondary">Expertise / Specializations</label>
-                            <div className="flex gap-2 mb-3">
-                                <select
-                                    value={newSpecialization}
-                                    onChange={(e) => setNewSpecialization(e.target.value)}
-                                    className="flex-1 bg-dark-elevated border border-dark-border rounded-xl px-4 py-3 text-text-primary focus:border-accent-purple focus:ring-2 focus:ring-accent-purple/20 transition-all"
-                                >
-                                    <option value="">Select a specialization...</option>
-                                    {specializationOptions.map(spec => (
-                                        <option key={spec} value={spec} disabled={formData.specializations.includes(spec)}>
-                                            {spec}
-                                        </option>
-                                    ))}
-                                </select>
+                    <div className="flex items-center justify-between mb-6">
+                        <h2 className="text-2xl font-bold flex items-center gap-2">
+                            <User className="w-6 h-6 text-accent-purple" />
+                            Profile Management
+                        </h2>
+                        {!isViewing && !isEditing && (
+                            <button
+                                onClick={() => setIsViewing(true)}
+                                className="px-6 py-3 bg-gradient-to-r from-accent-purple to-accent-pink rounded-xl hover:shadow-lg hover:shadow-accent-purple/50 transition-all font-semibold"
+                            >
+                                View Details
+                            </button>
+                        )}
+                        {isViewing && !isEditing && (
+                            <div className="flex gap-3">
                                 <button
-                                    onClick={() => addSpecialization(newSpecialization)}
-                                    disabled={!newSpecialization || formData.specializations.includes(newSpecialization)}
-                                    className="px-6 py-3 bg-gradient-to-r from-accent-purple to-accent-pink rounded-xl hover:shadow-lg hover:shadow-accent-purple/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                    onClick={() => {
+                                        setIsViewing(false);
+                                        setIsEditing(false);
+                                    }}
+                                    className="px-6 py-3 bg-dark-elevated hover:bg-dark-border rounded-xl font-semibold transition-all"
                                 >
-                                    <Plus className="w-5 h-5" />
+                                    Collapse
+                                </button>
+                                <button
+                                    onClick={() => setIsEditing(true)}
+                                    className="px-6 py-3 bg-gradient-to-r from-accent-purple to-accent-pink rounded-xl hover:shadow-lg hover:shadow-accent-purple/50 transition-all font-semibold"
+                                >
+                                    Edit Details
                                 </button>
                             </div>
+                        )}
+                    </div>
 
-                            <div className="flex flex-wrap gap-2">
-                                {formData.specializations.map((spec, index) => (
-                                    <div
-                                        key={index}
-                                        className="group relative bg-gradient-to-r from-accent-purple/20 to-accent-pink/20 border border-accent-purple/30 rounded-lg px-4 py-2 flex items-center gap-2"
-                                    >
-                                        <span className="text-sm font-medium">{spec}</span>
-                                        <button
-                                            onClick={() => removeSpecialization(spec)}
-                                            className="p-1 hover:bg-red-500/20 rounded transition-all"
-                                        >
-                                            <X className="w-4 h-4 text-red-400" />
-                                        </button>
-                                    </div>
-                                ))}
-                            </div>
+                    {!isViewing && !isEditing ? (
+                        /* Fully collapsed view - show nothing */
+                        <div className="text-center py-8">
+                            <p className="text-text-secondary text-sm">Click "View Details" to see your profile information</p>
                         </div>
-
-                        {/* Portfolio Images */}
-                        <div>
-                            <label className="block text-sm font-medium mb-2 text-text-secondary">
-                                Portfolio Images ({formData.portfolio_images.length}/5)
-                            </label>
-
-                            {formData.portfolio_images.length < 5 && (
-                                <div className="mb-4">
-                                    <label className="cursor-pointer">
-                                        <div className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-accent-purple to-accent-pink rounded-xl hover:shadow-lg hover:shadow-accent-purple/50 transition-all">
-                                            <Image className="w-5 h-5" />
-                                            <span>Choose Image from Device</span>
-                                        </div>
-                                        <input
-                                            type="file"
-                                            accept="image/*"
-                                            onChange={(e) => {
-                                                const file = e.target.files[0];
-                                                if (file && formData.portfolio_images.length < 5) {
-                                                    const reader = new FileReader();
-                                                    reader.onloadend = () => {
-                                                        setFormData({
-                                                            ...formData,
-                                                            portfolio_images: [...formData.portfolio_images, reader.result]
-                                                        });
-                                                    };
-                                                    reader.readAsDataURL(file);
-                                                }
-                                                e.target.value = ''; // Reset input
-                                            }}
-                                            className="hidden"
-                                        />
-                                    </label>
+                    ) : isViewing && !isEditing ? (
+                        /* Read-only view */
+                        <div className="space-y-6">
+                            {/* Short Bio - Read Only */}
+                            {formData.bio_short && (
+                                <div>
+                                    <label className="block text-sm font-medium mb-2 text-text-secondary">Short Bio / Tagline</label>
+                                    <p className="text-text-primary bg-dark-elevated border border-dark-border rounded-xl px-4 py-3">
+                                        {formData.bio_short}
+                                    </p>
                                 </div>
                             )}
 
-                            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                                {formData.portfolio_images.map((url, index) => (
-                                    <div key={index} className="relative group aspect-square">
-                                        <img
-                                            src={url}
-                                            alt={`Portfolio ${index + 1}`}
-                                            className="w-full h-full object-cover rounded-xl border border-dark-border"
-                                            onError={(e) => {
-                                                e.target.src = 'https://via.placeholder.com/150?text=Invalid+URL';
-                                            }}
-                                        />
-                                        <button
-                                            onClick={() => removePortfolioImage(index)}
-                                            className="absolute top-2 right-2 p-2 bg-red-500 rounded-lg opacity-0 group-hover:opacity-100 transition-all hover:bg-red-600"
-                                        >
-                                            <X className="w-4 h-4" />
-                                        </button>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
+                            {/* Detailed Bio - Read Only */}
+                            {formData.bio && (
+                                <div>
+                                    <label className="block text-sm font-medium mb-2 text-text-secondary">Detailed Bio</label>
+                                    <p className="text-text-primary bg-dark-elevated border border-dark-border rounded-xl px-4 py-3 whitespace-pre-wrap">
+                                        {formData.bio}
+                                    </p>
+                                </div>
+                            )}
 
-                        {/* Service Fee & Address */}
-                        <div className="grid md:grid-cols-2 gap-6">
-                            <div>
-                                <label className="block text-sm font-medium mb-2 text-text-secondary">Service Fee per Seeker (₹)</label>
-                                <input
-                                    type="number"
-                                    value={formData.hourly_rate}
-                                    onChange={(e) => setFormData({ ...formData, hourly_rate: e.target.value })}
-                                    placeholder="500"
-                                    className="w-full bg-dark-elevated border border-dark-border rounded-xl px-4 py-3 text-text-primary placeholder-text-secondary/50 focus:border-accent-purple focus:ring-2 focus:ring-accent-purple/20 transition-all"
-                                />
+                            {/* Specializations - Read Only */}
+                            {formData.specializations.length > 0 && (
+                                <div>
+                                    <label className="block text-sm font-medium mb-2 text-text-secondary">Expertise / Specializations</label>
+                                    <div className="flex flex-wrap gap-2">
+                                        {formData.specializations.map((spec, index) => (
+                                            <div
+                                                key={index}
+                                                className="bg-gradient-to-r from-accent-purple/20 to-accent-pink/20 border border-accent-purple/30 rounded-lg px-4 py-2"
+                                            >
+                                                <span className="text-sm font-medium">{spec}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Portfolio Images - Read Only */}
+                            {formData.portfolio_images.length > 0 && (
+                                <div>
+                                    <label className="block text-sm font-medium mb-2 text-text-secondary">
+                                        Portfolio Images ({formData.portfolio_images.length})
+                                    </label>
+                                    <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                                        {formData.portfolio_images.map((url, index) => (
+                                            <div key={index} className="relative aspect-square">
+                                                <img
+                                                    src={url}
+                                                    alt={`Portfolio ${index + 1}`}
+                                                    className="w-full h-full object-cover rounded-xl border border-dark-border"
+                                                    onError={(e) => {
+                                                        e.target.src = 'https://via.placeholder.com/150?text=Invalid+URL';
+                                                    }}
+                                                />
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Service Fee & Address - Read Only */}
+                            <div className="grid md:grid-cols-2 gap-6">
+                                {formData.hourly_rate && (
+                                    <div>
+                                        <label className="block text-sm font-medium mb-2 text-text-secondary">Service Fee per Seeker</label>
+                                        <p className="text-text-primary bg-dark-elevated border border-dark-border rounded-xl px-4 py-3">
+                                            ₹{formData.hourly_rate}
+                                        </p>
+                                    </div>
+                                )}
+                                {formData.address && (
+                                    <div>
+                                        <label className="block text-sm font-medium mb-2 text-text-secondary">
+                                            <MapPin className="w-4 h-4 inline mr-1" />
+                                            Address
+                                        </label>
+                                        <p className="text-text-primary bg-dark-elevated border border-dark-border rounded-xl px-4 py-3">
+                                            {formData.address}
+                                        </p>
+                                    </div>
+                                )}
                             </div>
+
+                            {/* Show message if profile is empty */}
+                            {!formData.bio_short && !formData.bio && formData.specializations.length === 0 &&
+                                formData.portfolio_images.length === 0 && !formData.hourly_rate && !formData.address && (
+                                    <div className="text-center py-12">
+                                        <User className="w-16 h-16 text-text-secondary/30 mx-auto mb-4" />
+                                        <p className="text-text-secondary text-lg">Your profile is empty</p>
+                                        <p className="text-text-secondary/60 text-sm mt-2">Click "Edit Details" to add your information</p>
+                                    </div>
+                                )}
+                        </div>
+                    ) : (
+                        /* Edit mode - Full form */
+                        <div className="space-y-6">
+                            {/* Short Bio */}
                             <div>
-                                <label className="block text-sm font-medium mb-2 text-text-secondary">
-                                    <MapPin className="w-4 h-4 inline mr-1" />
-                                    Address
-                                </label>
+                                <label className="block text-sm font-medium mb-2 text-text-secondary">Short Bio / Tagline</label>
                                 <input
                                     type="text"
-                                    value={formData.address}
-                                    onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                                    placeholder="Kochi, Kerala"
+                                    maxLength={200}
+                                    value={formData.bio_short}
+                                    onChange={(e) => setFormData({ ...formData, bio_short: e.target.value })}
+                                    placeholder="e.g., Award-winning stylist with 10+ years experience"
                                     className="w-full bg-dark-elevated border border-dark-border rounded-xl px-4 py-3 text-text-primary placeholder-text-secondary/50 focus:border-accent-purple focus:ring-2 focus:ring-accent-purple/20 transition-all"
                                 />
+                                <p className="text-xs text-text-secondary mt-1">{formData.bio_short.length}/200 characters</p>
+                            </div>
+
+                            {/* Detailed Bio */}
+                            <div>
+                                <label className="block text-sm font-medium mb-2 text-text-secondary">Detailed Bio</label>
+                                <textarea
+                                    rows={6}
+                                    value={formData.bio}
+                                    onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
+                                    placeholder="Tell seekers about your experience, approach, and what makes you unique..."
+                                    className="w-full bg-dark-elevated border border-dark-border rounded-xl px-4 py-3 text-text-primary placeholder-text-secondary/50 focus:border-accent-purple focus:ring-2 focus:ring-accent-purple/20 transition-all resize-none"
+                                />
+                            </div>
+
+                            {/* Specializations */}
+                            <div>
+                                <label className="block text-sm font-medium mb-2 text-text-secondary">Expertise / Specializations</label>
+                                <div className="flex gap-2 mb-3">
+                                    <select
+                                        value={newSpecialization}
+                                        onChange={(e) => setNewSpecialization(e.target.value)}
+                                        className="flex-1 bg-dark-elevated border border-dark-border rounded-xl px-4 py-3 text-text-primary focus:border-accent-purple focus:ring-2 focus:ring-accent-purple/20 transition-all"
+                                    >
+                                        <option value="">Select a specialization...</option>
+                                        {specializationOptions.map(spec => (
+                                            <option key={spec} value={spec} disabled={formData.specializations.includes(spec)}>
+                                                {spec}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    <button
+                                        onClick={() => addSpecialization(newSpecialization)}
+                                        disabled={!newSpecialization || formData.specializations.includes(newSpecialization)}
+                                        className="px-6 py-3 bg-gradient-to-r from-accent-purple to-accent-pink rounded-xl hover:shadow-lg hover:shadow-accent-purple/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        <Plus className="w-5 h-5" />
+                                    </button>
+                                </div>
+
+                                <div className="flex flex-wrap gap-2">
+                                    {formData.specializations.map((spec, index) => (
+                                        <div
+                                            key={index}
+                                            className="group relative bg-gradient-to-r from-accent-purple/20 to-accent-pink/20 border border-accent-purple/30 rounded-lg px-4 py-2 flex items-center gap-2"
+                                        >
+                                            <span className="text-sm font-medium">{spec}</span>
+                                            <button
+                                                onClick={() => removeSpecialization(spec)}
+                                                className="p-1 hover:bg-red-500/20 rounded transition-all"
+                                            >
+                                                <X className="w-4 h-4 text-red-400" />
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Portfolio Images */}
+                            <div>
+                                <label className="block text-sm font-medium mb-2 text-text-secondary">
+                                    Portfolio Images ({formData.portfolio_images.length}/5)
+                                </label>
+
+                                {formData.portfolio_images.length < 5 && (
+                                    <div className="mb-4">
+                                        <label className="cursor-pointer">
+                                            <div className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-accent-purple to-accent-pink rounded-xl hover:shadow-lg hover:shadow-accent-purple/50 transition-all">
+                                                <Image className="w-5 h-5" />
+                                                <span>Choose Image from Device</span>
+                                            </div>
+                                            <input
+                                                type="file"
+                                                accept="image/*"
+                                                onChange={(e) => {
+                                                    const file = e.target.files[0];
+                                                    if (file && formData.portfolio_images.length < 5) {
+                                                        const reader = new FileReader();
+                                                        reader.onloadend = () => {
+                                                            setFormData({
+                                                                ...formData,
+                                                                portfolio_images: [...formData.portfolio_images, reader.result]
+                                                            });
+                                                        };
+                                                        reader.readAsDataURL(file);
+                                                    }
+                                                    e.target.value = ''; // Reset input
+                                                }}
+                                                className="hidden"
+                                            />
+                                        </label>
+                                    </div>
+                                )}
+
+                                <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                                    {formData.portfolio_images.map((url, index) => (
+                                        <div key={index} className="relative group aspect-square">
+                                            <img
+                                                src={url}
+                                                alt={`Portfolio ${index + 1}`}
+                                                className="w-full h-full object-cover rounded-xl border border-dark-border"
+                                                onError={(e) => {
+                                                    e.target.src = 'https://via.placeholder.com/150?text=Invalid+URL';
+                                                }}
+                                            />
+                                            <button
+                                                onClick={() => removePortfolioImage(index)}
+                                                className="absolute top-2 right-2 p-2 bg-red-500 rounded-lg opacity-0 group-hover:opacity-100 transition-all hover:bg-red-600"
+                                            >
+                                                <X className="w-4 h-4" />
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Service Fee & Address */}
+                            <div className="grid md:grid-cols-2 gap-6">
+                                <div>
+                                    <label className="block text-sm font-medium mb-2 text-text-secondary">Service Fee per Seeker (₹)</label>
+                                    <input
+                                        type="number"
+                                        value={formData.hourly_rate}
+                                        onChange={(e) => setFormData({ ...formData, hourly_rate: e.target.value })}
+                                        placeholder="500"
+                                        className="w-full bg-dark-elevated border border-dark-border rounded-xl px-4 py-3 text-text-primary placeholder-text-secondary/50 focus:border-accent-purple focus:ring-2 focus:ring-accent-purple/20 transition-all"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium mb-2 text-text-secondary">
+                                        <MapPin className="w-4 h-4 inline mr-1" />
+                                        Address
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={formData.address}
+                                        onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                                        placeholder="Kochi, Kerala"
+                                        className="w-full bg-dark-elevated border border-dark-border rounded-xl px-4 py-3 text-text-primary placeholder-text-secondary/50 focus:border-accent-purple focus:ring-2 focus:ring-accent-purple/20 transition-all"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Action Buttons */}
+                            <div className="flex gap-4 justify-end pt-4">
+                                <button
+                                    onClick={() => {
+                                        setIsEditing(false);
+                                        // Reset form to original profile data
+                                        setFormData({
+                                            is_active: profile.is_active !== undefined ? profile.is_active : true,
+                                            bio_short: profile.bio_short || '',
+                                            bio: profile.bio || '',
+                                            specializations: Array.isArray(profile.specializations) ? profile.specializations : [],
+                                            portfolio_images: Array.isArray(profile.portfolio_images) ? profile.portfolio_images : [],
+                                            hourly_rate: profile.hourly_rate ? String(profile.hourly_rate) : '',
+                                            address: profile.address || '',
+                                            latitude: profile.latitude || '',
+                                            longitude: profile.longitude || ''
+                                        });
+                                    }}
+                                    className="px-6 py-3 bg-dark-elevated hover:bg-dark-border rounded-xl font-semibold transition-all"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={async () => {
+                                        await handleSaveProfile();
+                                        if (!saving) {
+                                            setIsEditing(false);
+                                        }
+                                    }}
+                                    disabled={saving || saved}
+                                    className={`px-8 py-4 rounded-xl font-semibold hover:shadow-2xl hover:shadow-accent-purple/50 transition-all disabled:opacity-50 flex items-center gap-2 ${saved
+                                        ? 'bg-green-500'
+                                        : 'bg-gradient-to-r from-accent-purple to-accent-pink'
+                                        }`}
+                                >
+                                    {saving ? (
+                                        <>
+                                            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                            Saving...
+                                        </>
+                                    ) : saved ? (
+                                        <>
+                                            <Check className="w-5 h-5 animate-bounce" />
+                                            Saved!
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Check className="w-5 h-5" />
+                                            Save Profile
+                                        </>
+                                    )}
+                                </button>
                             </div>
                         </div>
-
-                        {/* Save Button */}
-                        <div className="flex justify-end pt-4">
-                            <button
-                                onClick={handleSaveProfile}
-                                disabled={saving || saved}
-                                className={`px-8 py-4 rounded-xl font-semibold hover:shadow-2xl hover:shadow-accent-purple/50 transition-all disabled:opacity-50 flex items-center gap-2 ${saved
-                                    ? 'bg-green-500'
-                                    : 'bg-gradient-to-r from-accent-purple to-accent-pink'
-                                    }`}
-                            >
-                                {saving ? (
-                                    <>
-                                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                                        Saving...
-                                    </>
-                                ) : saved ? (
-                                    <>
-                                        <Check className="w-5 h-5 animate-bounce" />
-                                        Saved!
-                                    </>
-                                ) : (
-                                    <>
-                                        <Check className="w-5 h-5" />
-                                        Save Profile
-                                    </>
-                                )}
-                            </button>
-                        </div>
-                    </div>
+                    )}
                 </div>
 
                 {/* Incoming Requests Section */}
@@ -1013,16 +1184,6 @@ const CatalystDashboard = () => {
                                             })}
                                         </p>
                                     </div>
-                                    {selectedMatchedSeeker.scheduled_time && (
-                                        <div>
-                                            <p className="text-sm text-text-secondary">Scheduled Time</p>
-                                            <p className="text-text-primary font-medium">
-                                                {new Date(selectedMatchedSeeker.scheduled_time).toLocaleDateString('en-US', {
-                                                    year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
-                                                })}
-                                            </p>
-                                        </div>
-                                    )}
                                     {selectedMatchedSeeker.service && (
                                         <div>
                                             <p className="text-sm text-text-secondary">Service</p>

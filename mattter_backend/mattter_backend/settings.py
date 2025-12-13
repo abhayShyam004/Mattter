@@ -150,7 +150,7 @@ REST_FRAMEWORK = {
     ],
 }
 
-# CORS
+# CORS - Updated to allow frontend on port 5176
 CORS_ALLOWED_ORIGINS = os.getenv('CORS_ALLOWED_ORIGINS', '').split(',') if os.getenv('CORS_ALLOWED_ORIGINS') else []
 CORS_ALLOW_ALL_ORIGINS = not CORS_ALLOWED_ORIGINS  # Only allow all if specific origins not set
 
