@@ -11,3 +11,4 @@ uvicorn
 Pillow
 requests
 redis
+gunicorn
