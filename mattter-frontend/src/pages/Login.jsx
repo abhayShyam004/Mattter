@@ -7,12 +7,14 @@ const Login = () => {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
     const { login } = useAuth();
     const navigate = useNavigate();
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
+        setIsLoading(true);
 
         try {
             const userData = await login(username, password);
@@ -28,6 +30,7 @@ const Login = () => {
             }
         } catch (err) {
             setError(err.response?.data?.non_field_errors?.[0] || 'Invalid username or password');
+            setIsLoading(false);
         }
     };
 
@@ -96,10 +99,20 @@ const Login = () => {
 
                         <button
                             type="submit"
-                            className="w-full flex items-center justify-center space-x-2 px-6 py-3 bg-gradient-to-r from-accent-purple to-accent-pink text-white rounded-lg font-medium hover:shadow-lg hover:shadow-accent-purple/50 transition-all transform hover:scale-105"
+                            disabled={isLoading}
+                            className={`w-full flex items-center justify-center space-x-2 px-6 py-3 bg-gradient-to-r from-accent-purple to-accent-pink text-white rounded-lg font-medium hover:shadow-lg hover:shadow-accent-purple/50 transition-all transform hover:scale-105 ${isLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
                         >
-                            <LogIn className="w-5 h-5" />
-                            <span>Sign In</span>
+                            {isLoading ? (
+                                <>
+                                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                    <span>Signing In...</span>
+                                </>
+                            ) : (
+                                <>
+                                    <LogIn className="w-5 h-5" />
+                                    <span>Sign In</span>
+                                </>
+                            )}
                         </button>
                     </form>
 

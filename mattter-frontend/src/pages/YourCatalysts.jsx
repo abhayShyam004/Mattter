@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Users, Clock, CheckCircle, Trash2, ArrowLeft, Loader, Search, ChevronDown, ChevronUp, Star } from 'lucide-react';
+import { Users, Clock, CheckCircle, Trash2, ArrowLeft, Search, ChevronDown, ChevronUp, Star } from 'lucide-react';
 import { API_BASE_URL } from '../config';
 import RatingModal from '../components/RatingModal';
 
@@ -212,7 +212,7 @@ const YourCatalysts = () => {
     if (loading) {
         return (
             <div className="min-h-screen flex items-center justify-center">
-                <Loader className="w-12 h-12 text-accent-purple animate-spin" />
+                <div className="w-12 h-12 border-4 border-accent-purple/30 border-t-accent-purple rounded-full animate-spin" />
             </div>
         );
     }
@@ -354,7 +354,7 @@ const YourCatalysts = () => {
                                                             title="Delete request"
                                                         >
                                                             {deletingId === booking.id ? (
-                                                                <Loader className="w-4 h-4 animate-spin" />
+                                                                <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
                                                             ) : (
                                                                 <Trash2 className="w-4 h-4" />
                                                             )}
@@ -576,7 +576,7 @@ const YourCatalysts = () => {
                             >
                                 {deletingId === matchedToDelete.id ? (
                                     <>
-                                        <Loader className="w-5 h-5 animate-spin" />
+                                        <div className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin" />
                                         Removing...
                                     </>
                                 ) : (

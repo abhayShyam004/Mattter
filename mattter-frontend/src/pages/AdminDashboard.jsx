@@ -6,7 +6,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import {
     Users, Star, Activity, AlertTriangle, Trash2, Search,
     X, CheckCircle, ChevronRight, Filter, ChevronDown, User, Calendar,
-    LayoutDashboard, LogOut, Menu, Sparkles, Loader
+    LayoutDashboard, LogOut, Menu, Sparkles
 } from 'lucide-react';
 
 // --- Components ---
@@ -96,7 +96,7 @@ const UserDetailModal = ({ user, onClose, onDelete }) => {
                         {/* Loading State */}
                         {user.loadingDetails && (
                             <div className="flex justify-center py-12">
-                                <Loader className="w-8 h-8 text-accent-purple animate-spin" />
+                                <div className="w-8 h-8 border-3 border-accent-purple/30 border-t-accent-purple rounded-full animate-spin"></div>
                             </div>
                         )}
 
@@ -357,7 +357,7 @@ const DeleteConfirmationModal = ({ isOpen, onClose, onConfirm, userName, isDelet
                         >
                             {isDeleting ? (
                                 <>
-                                    <Loader className="w-4 h-4 animate-spin" />
+                                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                                     <span>Deleting...</span>
                                 </>
                             ) : (
@@ -544,7 +544,7 @@ const AdminDashboard = () => {
     if (loading) {
         return (
             <div className="min-h-screen bg-dark-bg flex items-center justify-center">
-                <Loader className="w-12 h-12 text-accent-purple animate-spin" />
+                <div className="w-12 h-12 border-4 border-accent-purple/30 border-t-accent-purple rounded-full animate-spin"></div>
             </div>
         );
     }

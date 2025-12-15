@@ -11,8 +11,7 @@ import {
     Shirt,
     Laptop,
     Edit2,
-    X,
-    Loader2
+    X
 } from 'lucide-react';
 import axios from 'axios';
 import { API_BASE_URL } from '../config';
@@ -122,7 +121,7 @@ const PreferencesEditor = ({ onClose }) => {
             <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
                 <div className="bg-dark-surface border border-dark-border rounded-2xl p-8 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
                     <div className="flex items-center justify-center space-x-3 text-text-primary">
-                        <Loader2 className="w-6 h-6 animate-spin" />
+                        <div className="w-6 h-6 border-3 border-accent-purple/30 border-t-accent-purple rounded-full animate-spin"></div>
                         <span>Loading preferences...</span>
                     </div>
                 </div>
@@ -338,7 +337,7 @@ const PreferencesEditor = ({ onClose }) => {
                         >
                             {saving ? (
                                 <>
-                                    <Loader2 className="w-5 h-5 animate-spin" />
+                                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                                     <span>Saving...</span>
                                 </>
                             ) : (

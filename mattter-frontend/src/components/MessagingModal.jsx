@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { XCircle, Send, MessageCircle, Loader, Info } from 'lucide-react';
+import { XCircle, Send, MessageCircle, Info } from 'lucide-react';
 import axios from 'axios';
 import { API_BASE_URL } from '../config';
 
@@ -115,7 +115,7 @@ const MessagingModal = ({ booking, onClose, currentUser }) => {
                 <div className="flex-1 overflow-y-auto p-6 space-y-4">
                     {loading ? (
                         <div className="flex items-center justify-center py-8">
-                            <Loader className="w-6 h-6 text-accent-purple animate-spin" />
+                            <div className="w-6 h-6 border-3 border-accent-purple/30 border-t-accent-purple rounded-full animate-spin"></div>
                         </div>
                     ) : messages.length === 0 ? (
                         <div className="text-center py-8 text-text-secondary">
@@ -168,7 +168,7 @@ const MessagingModal = ({ booking, onClose, currentUser }) => {
                             className="px-6 py-3 bg-gradient-to-r from-accent-purple to-accent-pink rounded-xl text-white font-medium hover:shadow-lg hover:shadow-accent-purple/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                         >
                             {sending ? (
-                                <Loader className="w-5 h-5 animate-spin" />
+                                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                             ) : (
                                 <Send className="w-5 h-5" />
                             )}

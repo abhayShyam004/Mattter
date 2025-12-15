@@ -13,6 +13,7 @@ const Register = () => {
         age: '',
         role: 'SEEKER'
     });
+    const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
     const [termsAccepted, setTermsAccepted] = useState(false);
     const [showTermsModal, setShowTermsModal] = useState(false);
@@ -26,9 +27,11 @@ const Register = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
+        setIsLoading(true);
 
         if (!termsAccepted) {
             setError('You must accept the Terms & Conditions to register.');
+            setIsLoading(false);
             return;
         }
 
@@ -78,6 +81,7 @@ const Register = () => {
             }
         } catch (err) {
             setError('Registration failed. Username might be taken.');
+            setIsLoading(false);
         }
     };
 
@@ -262,10 +266,20 @@ const Register = () => {
 
                         <button
                             type="submit"
-                            className="w-full flex items-center justify-center space-x-2 px-6 py-3 bg-gradient-to-r from-accent-blue to-accent-gold text-white rounded-lg font-medium hover:shadow-lg hover:shadow-accent-blue/50 transition-all transform hover:scale-105"
+                            disabled={isLoading}
+                            className={`w-full flex items-center justify-center space-x-2 px-6 py-3 bg-gradient-to-r from-accent-blue to-accent-gold text-white rounded-lg font-medium hover:shadow-lg hover:shadow-accent-blue/50 transition-all transform hover:scale-105 ${isLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
                         >
-                            <UserPlus className="w-5 h-5" />
-                            <span>Create Account</span>
+                            {isLoading ? (
+                                <>
+                                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                    <span>Creating Account...</span>
+                                </>
+                            ) : (
+                                <>
+                                    <UserPlus className="w-5 h-5" />
+                                    <span>Create Account</span>
+                                </>
+                            )}
                         </button>
                     </form>
 

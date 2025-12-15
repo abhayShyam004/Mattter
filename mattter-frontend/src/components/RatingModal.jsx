@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Star, X, Send, Loader } from 'lucide-react';
+import { Star, X, Send } from 'lucide-react';
 import { API_BASE_URL } from '../config';
 
 const RatingModal = ({ catalyst, booking, existingRating, onClose, onRatingSubmitted }) => {
@@ -170,7 +170,7 @@ const RatingModal = ({ catalyst, booking, existingRating, onClose, onRatingSubmi
                     >
                         {submitting ? (
                             <>
-                                <Loader className="w-5 h-5 animate-spin" />
+                                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                                 {existingRating ? 'Updating...' : 'Submitting...'}
                             </>
                         ) : (

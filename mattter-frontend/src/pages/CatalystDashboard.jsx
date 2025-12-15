@@ -51,28 +51,32 @@ const CatalystDashboard = () => {
     ];
 
     useEffect(() => {
+        // Optimistic load: if user data is already in context, use it immediately
+        if (user) {
+            setProfile(user);
+            initializeFormData(user);
+            setLoading(false); // Immediate display
+        }
+
+        // Fetch fresh data in background to ensure sync (or if user wasn't in context)
         fetchProfile();
         fetchIncomingRequests();
         fetchMatchedSeekers();
         detectLocation();
-    }, []);
+    }, [user]); // Re-run if user context updates
 
-    const detectLocation = () => {
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(
-                (position) => {
-                    setFormData(prev => ({
-                        ...prev,
-                        latitude: position.coords.latitude,
-                        longitude: position.coords.longitude
-                    }));
-                    console.log('Location detected:', position.coords.latitude, position.coords.longitude);
-                },
-                (error) => {
-                    console.log('Location detection failed, using defaults:', error.message);
-                }
-            );
-        }
+    const initializeFormData = (data) => {
+        setFormData({
+            is_active: data.is_active !== undefined ? data.is_active : true,
+            bio_short: data.bio_short || '',
+            bio: data.bio || '',
+            specializations: Array.isArray(data.specializations) ? data.specializations : [],
+            portfolio_images: Array.isArray(data.portfolio_images) ? data.portfolio_images : [],
+            hourly_rate: data.hourly_rate ? String(data.hourly_rate) : '',
+            address: data.address || '',
+            latitude: data.latitude || '',
+            longitude: data.longitude || ''
+        });
     };
 
     const fetchProfile = async () => {
@@ -84,20 +88,10 @@ const CatalystDashboard = () => {
             });
             const data = await response.json();
             console.log('Fetched profile data:', data);
-            setProfile(data);
 
-            // Populate form with existing data, ensuring proper defaults
-            setFormData({
-                is_active: data.is_active !== undefined ? data.is_active : true,
-                bio_short: data.bio_short || '',
-                bio: data.bio || '',
-                specializations: Array.isArray(data.specializations) ? data.specializations : [],
-                portfolio_images: Array.isArray(data.portfolio_images) ? data.portfolio_images : [],
-                hourly_rate: data.hourly_rate ? String(data.hourly_rate) : '',
-                address: data.address || '',
-                latitude: data.latitude || '',
-                longitude: data.longitude || ''
-            });
+            // Only update if we didn't already set it from context (or to catch updates)
+            setProfile(data);
+            initializeFormData(data);
 
             // Function to check completion for initial modal trigger
             const checkCompletion = (pData) => {
@@ -120,6 +114,24 @@ const CatalystDashboard = () => {
             console.error('Error fetching profile:', error);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const detectLocation = () => {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    setFormData(prev => ({
+                        ...prev,
+                        latitude: position.coords.latitude,
+                        longitude: position.coords.longitude
+                    }));
+                    console.log('Location detected:', position.coords.latitude, position.coords.longitude);
+                },
+                (error) => {
+                    console.log('Location detection failed, using defaults:', error.message);
+                }
+            );
         }
     };
 
@@ -348,7 +360,7 @@ const CatalystDashboard = () => {
     if (loading) {
         return (
             <div className="min-h-screen flex items-center justify-center">
-                <div className="w-12 h-12 border-4 border-accent-purple border-t-transparent rounded-full animate-spin"></div>
+                <div className="w-12 h-12 border-4 border-accent-purple/30 border-t-accent-purple rounded-full animate-spin"></div>
             </div>
         );
     }
@@ -789,7 +801,7 @@ const CatalystDashboard = () => {
                                 >
                                     {saving ? (
                                         <>
-                                            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                                             Saving...
                                         </>
                                     ) : saved ? (

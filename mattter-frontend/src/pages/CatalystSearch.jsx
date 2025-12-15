@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
-import { MapPin, Loader, Search, Star } from 'lucide-react';
+import { MapPin, Search, Star } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import { API_BASE_URL } from '../config';
@@ -176,7 +176,7 @@ const CatalystSearch = () => {
         return (
             <div className="min-h-screen flex items-center justify-center bg-dark-bg">
                 <div className="text-center">
-                    <Loader className="w-12 h-12 text-accent-purple animate-spin mx-auto mb-4" />
+                    <div className="w-12 h-12 border-4 border-accent-purple/30 border-t-accent-purple rounded-full animate-spin mx-auto mb-4" />
                     <p className="text-text-secondary">Requesting location access...</p>
                 </div>
             </div>
@@ -233,7 +233,7 @@ const CatalystSearch = () => {
                     {/* Loading State */}
                     {loadingCatalysts && (
                         <div className="text-center py-8">
-                            <Loader className="w-8 h-8 text-accent-purple animate-spin mx-auto mb-2" />
+                            <div className="w-8 h-8 border-2 border-accent-purple/30 border-t-accent-purple rounded-full animate-spin mx-auto mb-2" />
                             <p className="text-text-secondary text-sm">Loading catalysts...</p>
                         </div>
                     )}
