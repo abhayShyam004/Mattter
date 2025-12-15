@@ -142,7 +142,12 @@ class Rating(models.Model):
 
     def update_catalyst_rating(self):
         """Update the catalyst's average rating and count"""
-        catalyst_profile = self.catalyst.profile
+        try:
+            catalyst_profile = self.catalyst.profile
+        except Exception:
+            # Profile might be deleted or user is being deleted
+            return
+
         ratings = Rating.objects.filter(catalyst=self.catalyst)
         count = ratings.count()
         if count > 0:
@@ -157,7 +162,12 @@ class Rating(models.Model):
     @staticmethod
     def update_catalyst_rating_for_user(catalyst):
         """Update a specific catalyst's rating"""
-        catalyst_profile = catalyst.profile
+        try:
+            catalyst_profile = catalyst.profile
+        except Exception:
+            # Profile might be deleted or user is being deleted
+            return
+
         ratings = Rating.objects.filter(catalyst=catalyst)
         count = ratings.count()
         if count > 0:
@@ -185,3 +195,26 @@ class Message(models.Model):
 
     def __str__(self):
         return f"Message from {self.sender.username} at {self.timestamp}"
+
+class Report(models.Model):
+    """
+    Model to store user reports against other users.
+    """
+    REPORT_STATUS_CHOICES = (
+        ('PENDING', 'Pending'),
+        ('RESOLVED', 'Resolved'),
+        ('DISMISSED', 'Dismissed'),
+    )
+
+    reporter = models.ForeignKey(User, on_delete=models.CASCADE, related_name='reports_filed')
+    reported_user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='reports_received')
+    reason = models.TextField()
+    status = models.CharField(max_length=20, choices=REPORT_STATUS_CHOICES, default='PENDING')
+    created_at = models.DateTimeField(auto_now_add=True)
+    resolved_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"Report by {self.reporter.username} against {self.reported_user.username}"

@@ -61,8 +61,8 @@ const SeekerDashboard = () => {
         <div className="min-h-screen flex items-center justify-center px-4 py-12">
             <div className="max-w-4xl w-full">
                 {/* Header */}
-                <div className="text-center mb-16">
-                    <h1 className="text-5xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-accent-purple via-accent-pink to-accent-gold bg-clip-text text-transparent">
+                <div className="text-center mb-16 px-4">
+                    <h1 className="text-3xl sm:text-5xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-accent-purple via-accent-pink to-accent-gold bg-clip-text text-transparent break-words">
                         Welcome Back{user?.user?.username && `, ${user.user.username}`}
                     </h1>
                     <p className="text-xl text-text-secondary">

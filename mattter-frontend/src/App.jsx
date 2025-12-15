@@ -11,6 +11,7 @@ import YourCatalysts from './pages/YourCatalysts';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import SeekerOnboarding from './pages/SeekerOnboarding';
+import AdminDashboard from './pages/AdminDashboard';
 
 function App() {
     return (
@@ -25,15 +26,22 @@ function App() {
                         </ProtectedRoute>
                     } />
 
+                    {/* Admin Route - Isolated from Main Layout */}
+                    <Route path="/admin" element={
+                        <ProtectedRoute allowedRoles={['ADMIN']}>
+                            <AdminDashboard />
+                        </ProtectedRoute>
+                    } />
+
                     <Route path="/" element={<Layout />}>
                         <Route index element={<LandingPage />} />
                         <Route path="seeker" element={
-                            <ProtectedRoute>
+                            <ProtectedRoute allowedRoles={['SEEKER']}>
                                 <SeekerDashboard />
                             </ProtectedRoute>
                         } />
                         <Route path="catalyst" element={
-                            <ProtectedRoute>
+                            <ProtectedRoute allowedRoles={['CATALYST']}>
                                 <CatalystDashboard />
                             </ProtectedRoute>
                         } />
@@ -43,7 +51,7 @@ function App() {
                             </ProtectedRoute>
                         } />
                         <Route path="catalysts" element={
-                            <ProtectedRoute>
+                            <ProtectedRoute allowedRoles={['SEEKER']}>
                                 <YourCatalysts />
                             </ProtectedRoute>
                         } />

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
-import { Sparkles, Users, MapPin, Zap, Heart, Calendar, ChevronRight } from 'lucide-react';
+import { Sparkles, Users, MapPin, Zap, Heart, Calendar, ChevronRight, Coins } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import { API_BASE_URL } from '../config';
@@ -146,8 +146,8 @@ const LandingPage = () => {
                         </h1>
 
                         <p className="text-xl md:text-2xl text-text-secondary max-w-3xl mx-auto mb-12">
-                            Connect with expert fashion stylists in your area for in-person consultations.
-                            Book physical appointments, get personalized wardrobe recommendations, and transform your style face-to-face.
+                            Connect with fashion enthusiasts in your area for personalized consultations.
+                            Book appointments, get personalized wardrobe recommendations, and transform your style.
                         </p>
 
                         <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -204,7 +204,7 @@ const LandingPage = () => {
                                     <Users className="w-7 h-7 text-white" />
                                 </div>
                                 <h3 className="text-xl font-bold mb-2 text-text-primary">Personal Catalysts</h3>
-                                <p className="text-text-secondary">Meet certified fashion experts in person for personalized styling sessions</p>
+                                <p className="text-text-secondary">Meet amateur fashion enthusiasts in person for personalized styling sessions</p>
                             </div>
                         </div>
 
@@ -218,7 +218,7 @@ const LandingPage = () => {
                                     <Heart className="w-7 h-7 text-white" />
                                 </div>
                                 <h3 className="text-xl font-bold mb-2 text-text-primary">Smart Wardrobe</h3>
-                                <p className="text-text-secondary">Organize and manage your wardrobe with AI-powered recommendations</p>
+                                <p className="text-text-secondary">Change your wardrobe with the help of experts in that field</p>
                             </div>
                         </div>
 
@@ -246,7 +246,7 @@ const LandingPage = () => {
                                     <Calendar className="w-7 h-7 text-white" />
                                 </div>
                                 <h3 className="text-xl font-bold mb-2 text-text-primary">Easy Booking</h3>
-                                <p className="text-text-secondary">Schedule physical appointments and meet your favorite stylists in person</p>
+                                <p className="text-text-secondary">Schedule physical or online appointments and meet your favorite stylists</p>
                             </div>
                         </div>
                     </div>
@@ -411,7 +411,7 @@ const LandingPage = () => {
                                 </div>
                                 <h3 className="text-xl font-bold mb-3 text-text-primary">Find Your Catalyst</h3>
                                 <p className="text-text-secondary">
-                                    Browse local stylists, book appointments, and meet them in person
+                                    Browse local catalysts, book appointments, and connect with them
                                 </p>
                             </div>
                         </div>
@@ -424,8 +424,96 @@ const LandingPage = () => {
                                 </div>
                                 <h3 className="text-xl font-bold mb-3 text-text-primary">Transform Your Style</h3>
                                 <p className="text-text-secondary">
-                                    Attend in-person sessions for personalized advice, wardrobe makeovers, and ongoing support
+                                    Attend sessions for personalized advice, wardrobe makeovers, and ongoing support
                                 </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* Become a Catalyst Section */}
+            <section className="py-24 px-4 bg-dark-surface/30">
+                <div className="max-w-7xl mx-auto">
+                    <div className="grid md:grid-cols-2 gap-12 items-center">
+                        <div>
+                            <h2 className="text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-accent-gold to-accent-pink bg-clip-text text-transparent">
+                                Become a Catalyst
+                            </h2>
+                            <p className="text-xl text-text-secondary mb-8">
+                                Share your passion for fashion, help others find their confidence, and earn while doing what you love.
+                            </p>
+
+                            <div className="space-y-8">
+                                <div className="flex items-start space-x-4">
+                                    <div className="p-3 bg-accent-gold/10 rounded-xl border border-accent-gold/20">
+                                        <Coins className="w-6 h-6 text-accent-gold" />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-lg font-bold text-text-primary mb-1">Earn on Your Terms</h3>
+                                        <p className="text-text-secondary">Set your own rates and schedule. Turn your styling hobby into a rewarding income source.</p>
+                                    </div>
+                                </div>
+
+                                <div className="flex items-start space-x-4">
+                                    <div className="p-3 bg-accent-pink/10 rounded-xl border border-accent-pink/20">
+                                        <Heart className="w-6 h-6 text-accent-pink" />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-lg font-bold text-text-primary mb-1">Help Others Shine</h3>
+                                        <p className="text-text-secondary">Make a difference. We encourage our catalysts to offer pro-bono sessions for those in need.</p>
+                                    </div>
+                                </div>
+
+                                <div className="flex items-start space-x-4">
+                                    <div className="p-3 bg-accent-purple/10 rounded-xl border border-accent-purple/20">
+                                        <Users className="w-6 h-6 text-accent-purple" />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-lg font-bold text-text-primary mb-1">Build Connections</h3>
+                                        <p className="text-text-secondary">Meet new people, make friends, and build a vibrant community around your passion for style.</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="mt-10">
+                                <Link
+                                    to="/register"
+                                    className="inline-flex items-center space-x-2 px-8 py-4 bg-dark-elevated border border-accent-gold/30 text-accent-gold rounded-xl font-semibold text-lg hover:bg-accent-gold hover:text-white hover:border-accent-gold transition-all"
+                                >
+                                    <span>Join as Catalyst</span>
+                                    <ChevronRight className="w-5 h-5" />
+                                </Link>
+                            </div>
+                        </div>
+
+                        <div className="relative hidden md:block">
+                            <div className="absolute inset-0 bg-gradient-to-br from-accent-gold/20 to-accent-pink/20 blur-3xl rounded-full"></div>
+                            <div className="relative bg-dark-surface border border-dark-border rounded-2xl p-8 backdrop-blur-sm rotate-3 hover:rotate-0 transition-transform duration-500">
+                                <div className="flex items-center space-x-4 mb-6">
+                                    <div className="w-16 h-16 bg-gradient-to-br from-accent-gold to-accent-pink rounded-full flex items-center justify-center text-white text-2xl font-bold">
+                                        C
+                                    </div>
+                                    <div>
+                                        <div className="h-6 w-32 bg-dark-elevated rounded mb-2 animate-pulse"></div>
+                                        <div className="h-4 w-24 bg-dark-elevated/50 rounded animate-pulse"></div>
+                                    </div>
+                                </div>
+                                <div className="space-y-3">
+                                    <div className="h-3 w-full bg-dark-elevated/30 rounded"></div>
+                                    <div className="h-3 w-full bg-dark-elevated/30 rounded"></div>
+                                    <div className="h-3 w-3/4 bg-dark-elevated/30 rounded"></div>
+                                </div>
+                                <div className="mt-6 flex justify-between items-center">
+                                    <div className="flex -space-x-2">
+                                        <div className="w-8 h-8 rounded-full bg-accent-purple/20 border-2 border-dark-surface"></div>
+                                        <div className="w-8 h-8 rounded-full bg-accent-blue/20 border-2 border-dark-surface"></div>
+                                        <div className="w-8 h-8 rounded-full bg-accent-pink/20 border-2 border-dark-surface"></div>
+                                    </div>
+                                    <div className="px-3 py-1 bg-accent-gold/20 text-accent-gold text-xs rounded-full">
+                                        Top Rated
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>

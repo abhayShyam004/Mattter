@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { UserPlus, Sparkles } from 'lucide-react';
+import { UserPlus, Sparkles, X, FileText } from 'lucide-react';
 import { API_BASE_URL } from '../config';
 
 const Register = () => {
@@ -14,6 +14,8 @@ const Register = () => {
         role: 'SEEKER'
     });
     const [error, setError] = useState('');
+    const [termsAccepted, setTermsAccepted] = useState(false);
+    const [showTermsModal, setShowTermsModal] = useState(false);
     const { register } = useAuth();
     const navigate = useNavigate();
 
@@ -24,6 +26,12 @@ const Register = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
+
+        if (!termsAccepted) {
+            setError('You must accept the Terms & Conditions to register.');
+            return;
+        }
+
         try {
             await register(formData);
 
@@ -223,6 +231,35 @@ const Register = () => {
                             </div>
                         </div>
 
+                        {/* Terms & Conditions Checkbox */}
+                        <div className="flex items-start">
+                            <div className="flex items-center h-5">
+                                <input
+                                    id="terms"
+                                    name="terms"
+                                    type="checkbox"
+                                    required
+                                    className="w-4 h-4 text-accent-blue bg-dark-elevated border-dark-border rounded focus:ring-accent-blue focus:ring-2 cursor-pointer disabled:opacity-50"
+                                    checked={termsAccepted}
+                                    readOnly
+                                    onClick={() => !termsAccepted && setShowTermsModal(true)}
+                                />
+                            </div>
+                            <div className="ml-3 text-sm">
+                                <label htmlFor="terms" className="text-text-secondary">
+                                    I agree to the{' '}
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowTermsModal(true)}
+                                        className="text-accent-blue hover:text-accent-gold underline focus:outline-none"
+                                    >
+                                        Terms & Conditions
+                                    </button>
+                                    {' '}(Click to read)
+                                </label>
+                            </div>
+                        </div>
+
                         <button
                             type="submit"
                             className="w-full flex items-center justify-center space-x-2 px-6 py-3 bg-gradient-to-r from-accent-blue to-accent-gold text-white rounded-lg font-medium hover:shadow-lg hover:shadow-accent-blue/50 transition-all transform hover:scale-105"
@@ -242,6 +279,66 @@ const Register = () => {
                     </div>
                 </div>
             </div>
+
+            {/* Terms Modal */}
+            {showTermsModal && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+                    <div className="bg-dark-surface border border-dark-border rounded-xl max-w-lg w-full p-6 shadow-2xl relative">
+                        <button
+                            onClick={() => setShowTermsModal(false)}
+                            className="absolute top-4 right-4 text-text-secondary hover:text-white"
+                        >
+                            <X className="w-5 h-5" />
+                        </button>
+
+                        <div className="flex items-center space-x-3 mb-6">
+                            <div className="p-2 bg-accent-blue/10 rounded-lg">
+                                <FileText className="w-6 h-6 text-accent-blue" />
+                            </div>
+                            <h3 className="text-xl font-bold text-white">Terms & Conditions</h3>
+                        </div>
+
+                        <div className="space-y-4 text-text-secondary text-sm max-h-[60vh] overflow-y-auto pr-2">
+                            <p>Welcome to Mattter. By registering, you agree to the following short terms:</p>
+
+                            <ul className="list-disc pl-5 space-y-2">
+                                <li>
+                                    <strong className="text-text-primary">Respect Our Community:</strong> Treat all Catalysts and Seekers with respect. Harassment or abusive behavior will result in immediate account termination.
+                                </li>
+                                <li>
+                                    <strong className="text-text-primary">Authenticity:</strong> You must provide accurate information. Fake profiles or impersonation are strictly prohibited.
+                                </li>
+                                <li>
+                                    <strong className="text-text-primary">Platform Payments:</strong> All bookings and payments must be conducted through the Mattter platform to ensure safety and security for both parties.
+                                </li>
+                                <li>
+                                    <strong className="text-text-primary">Content Guidelines:</strong> Do not upload offensive or inappropriate content (images, bios, messages).
+                                </li>
+                                <li>
+                                    <strong className="text-text-primary">Public Visibility:</strong> All images and media you upload (including profile photos and wardrobe items) will be publicly accessible. Please be careful and do not upload sensitive personal information.
+                                </li>
+                                <li>
+                                    <strong className="text-text-primary">Account Suspension:</strong> We reserve the right to suspend or ban accounts that violate these rules without prior notice.
+                                </li>
+                            </ul>
+
+                            <p className="mt-4 text-xs text-text-muted">Last updated: December 2025</p>
+                        </div>
+
+                        <div className="mt-8">
+                            <button
+                                onClick={() => {
+                                    setTermsAccepted(true);
+                                    setShowTermsModal(false);
+                                }}
+                                className="w-full py-3 bg-dark-elevated hover:bg-accent-blue hover:text-white text-text-primary rounded-lg font-medium transition-all"
+                            >
+                                I Understand & Agree
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

@@ -144,29 +144,33 @@ const SeekerOnboarding = () => {
                 </div>
 
                 {/* Progress Bar */}
-                <div className="mb-8">
-                    <div className="flex items-center justify-between mb-2">
-                        {[1, 2, 3].map((step) => (
-                            <div key={step} className="flex items-center flex-1">
-                                <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold ${step < currentStep
-                                    ? 'bg-accent-purple text-white'
-                                    : step === currentStep
-                                        ? 'bg-accent-pink text-white'
-                                        : 'bg-dark-elevated text-text-muted'
-                                    }`}>
-                                    {step < currentStep ? <CheckCircle2 className="w-6 h-6" /> : step}
-                                </div>
-                                {step < 3 && (
-                                    <div className={`flex-1 h-1 mx-2 ${step < currentStep ? 'bg-accent-purple' : 'bg-dark-border'
-                                        }`}></div>
-                                )}
-                            </div>
-                        ))}
-                    </div>
-                    <div className="flex justify-between text-xs text-text-muted px-2">
-                        <span>Consultation</span>
-                        <span>Services</span>
-                        <span>Budget</span>
+                <div className="mb-12">
+                    <div className="flex items-center justify-center">
+                        {['Consultation', 'Services', 'Budget'].map((label, index) => {
+                            const step = index + 1;
+                            return (
+                                <React.Fragment key={step}>
+                                    <div className="relative flex flex-col items-center">
+                                        <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold flex-shrink-0 z-10 transition-colors duration-300 ${step < currentStep
+                                            ? 'bg-accent-purple text-white'
+                                            : step === currentStep
+                                                ? 'bg-accent-pink text-white'
+                                                : 'bg-dark-elevated text-text-muted'
+                                            }`}>
+                                            {step < currentStep ? <CheckCircle2 className="w-6 h-6" /> : step}
+                                        </div>
+                                        <span className={`absolute top-full mt-3 text-xs font-medium whitespace-nowrap transition-colors duration-300 ${step <= currentStep ? 'text-text-primary' : 'text-text-muted'
+                                            }`}>
+                                            {label}
+                                        </span>
+                                    </div>
+                                    {step < 3 && (
+                                        <div className={`w-24 sm:w-32 h-1 mx-2 transition-colors duration-300 ${step < currentStep ? 'bg-accent-purple' : 'bg-dark-border'
+                                            }`}></div>
+                                    )}
+                                </React.Fragment>
+                            );
+                        })}
                     </div>
                 </div>
 
@@ -366,12 +370,12 @@ const SeekerOnboarding = () => {
                     )}
 
                     {/* Navigation Buttons */}
-                    <div className="flex items-center justify-between mt-8 pt-6 border-t border-dark-border">
-                        <div>
+                    <div className="flex flex-col-reverse sm:flex-row items-center justify-between gap-4 mt-8 pt-6 border-t border-dark-border">
+                        <div className="w-full sm:w-auto flex justify-center sm:justify-start">
                             {currentStep === 1 && (
                                 <button
                                     onClick={handleSkip}
-                                    className="text-text-muted hover:text-text-secondary transition-colors text-sm"
+                                    className="text-text-muted hover:text-text-secondary transition-colors text-sm py-2 sm:py-0"
                                 >
                                     Skip for now
                                 </button>
@@ -379,7 +383,7 @@ const SeekerOnboarding = () => {
                             {currentStep > 1 && (
                                 <button
                                     onClick={handleBack}
-                                    className="flex items-center space-x-2 px-6 py-3 bg-dark-elevated border border-dark-border rounded-lg text-text-primary hover:bg-dark-surface transition-all"
+                                    className="w-full sm:w-auto flex items-center justify-center space-x-2 px-6 py-3 bg-dark-elevated border border-dark-border rounded-lg text-text-primary hover:bg-dark-surface transition-all"
                                 >
                                     <ChevronLeft className="w-5 h-5" />
                                     <span>Back</span>
@@ -387,12 +391,12 @@ const SeekerOnboarding = () => {
                             )}
                         </div>
 
-                        <div>
+                        <div className="w-full sm:w-auto">
                             {currentStep < totalSteps ? (
                                 <button
                                     onClick={handleNext}
                                     disabled={!isStepValid()}
-                                    className={`flex items-center space-x-2 px-6 py-3 rounded-lg font-medium transition-all ${isStepValid()
+                                    className={`w-full sm:w-auto flex items-center justify-center space-x-2 px-6 py-3 rounded-lg font-medium transition-all ${isStepValid()
                                         ? 'bg-gradient-to-r from-accent-purple to-accent-pink text-white hover:shadow-lg hover:shadow-accent-purple/50'
                                         : 'bg-dark-elevated text-text-muted cursor-not-allowed'
                                         }`}
@@ -404,7 +408,7 @@ const SeekerOnboarding = () => {
                                 <button
                                     onClick={handleSubmit}
                                     disabled={!isStepValid() || saving}
-                                    className={`flex items-center space-x-2 px-6 py-3 rounded-lg font-medium transition-all ${isStepValid() && !saving
+                                    className={`w-full sm:w-auto flex items-center justify-center space-x-2 px-6 py-3 rounded-lg font-medium transition-all ${isStepValid() && !saving
                                         ? 'bg-gradient-to-r from-accent-purple to-accent-pink text-white hover:shadow-lg hover:shadow-accent-purple/50'
                                         : 'bg-dark-elevated text-text-muted cursor-not-allowed'
                                         }`}

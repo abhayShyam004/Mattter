@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import User, Profile, WardrobeItem, Service, Booking, Message, Rating
+from .models import User, Profile, WardrobeItem, Service, Booking, Message, Rating, Report
 # from rest_framework_gis.serializers import GeoFeatureModelSerializer
 
 class UserSerializer(serializers.ModelSerializer):
@@ -151,3 +151,36 @@ class RatingSerializer(serializers.ModelSerializer):
         )
         return rating
 
+
+
+class ReportSerializer(serializers.ModelSerializer):
+    reporter = UserWithProfileSerializer(read_only=True)
+    reported_user = UserWithProfileSerializer(read_only=True)
+    reported_user_id = serializers.IntegerField(write_only=True)
+    
+    reporter_name = serializers.SerializerMethodField()
+    reported_user_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Report
+        fields = ['id', 'reporter', 'reported_user', 'reported_user_id', 'reporter_name', 'reported_user_name', 'reason', 'status', 'created_at', 'resolved_at']
+        read_only_fields = ['reporter', 'created_at']
+    
+    def get_reporter_name(self, obj):
+        return obj.reporter.get_full_name() or obj.reporter.username
+
+    def get_reported_user_name(self, obj):
+        if obj.reported_user:
+            return obj.reported_user.get_full_name() or obj.reported_user.username
+        return "Unknown"
+    
+    def create(self, validated_data):
+        reported_user_id = validated_data.pop('reported_user_id')
+        reporter_id = self.context['request'].user.id
+        
+        report = Report.objects.create(
+            reporter_id=reporter_id,
+            reported_user_id=reported_user_id,
+            **validated_data
+        )
+        return report

@@ -4,10 +4,12 @@ from rest_framework.response import Response
 from rest_framework import status
 # from django.contrib.gis.geos import Point
 # from django.contrib.gis.db.models.functions import Distance
-from .models import User, Profile, WardrobeItem, Service, Booking, Message, Rating
+from django.utils import timezone
+from .models import User, Profile, WardrobeItem, Service, Booking, Message, Rating, Report
 from .serializers import (
     UserSerializer, ProfileSerializer, WardrobeItemSerializer, 
-    ServiceSerializer, BookingSerializer, MessageSerializer, RatingSerializer
+    ServiceSerializer, BookingSerializer, MessageSerializer, RatingSerializer,
+    ReportSerializer
 )
 
 class ProfileViewSet(viewsets.ModelViewSet):
@@ -74,11 +76,17 @@ class ProfileViewSet(viewsets.ModelViewSet):
                 serializer = self.get_serializer(profile, data=request.data, partial=True)
                 if serializer.is_valid():
                     serializer.save()
-                    return Response(serializer.data)
+                    data = serializer.data
+                    data['is_staff'] = request.user.is_staff
+                    data['is_superuser'] = request.user.is_superuser
+                    return Response(data)
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
             else:
                 serializer = self.get_serializer(profile)
-                return Response(serializer.data)
+                data = serializer.data
+                data['is_staff'] = request.user.is_staff
+                data['is_superuser'] = request.user.is_superuser
+                return Response(data)
         return Response({"detail": "Not authenticated"}, status=401)
 
     @action(detail=False, methods=['GET'], permission_classes=[permissions.AllowAny])
@@ -526,3 +534,243 @@ class RatingViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(seeker=self.request.user)
 
+
+class AdminDataViewSet(viewsets.ViewSet):
+    """
+    ViewSet for admin dashboard data.
+    """
+    permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
+
+    @action(detail=False, methods=['GET'])
+    def dashboard_stats(self, request):
+        try:
+            # 1. Get all catalysts with stats
+            catalysts_qs = Profile.objects.filter(role='CATALYST').select_related('user')
+            catalysts_data = []
+            
+            for cat in catalysts_qs:
+                # Get matches for this catalyst
+                # Matches are confirmed or completed bookings
+                matches_qs = Booking.objects.filter(
+                    catalyst=cat.user, 
+                    status__in=['CONFIRMED', 'COMPLETED']
+                ).select_related('seeker')
+                
+                matches = []
+                for match in matches_qs:
+                    matches.append({
+                        'seeker_name': match.seeker.get_full_name() or match.seeker.username,
+                        'seeker_email': match.seeker.email,
+                        'status': match.status,
+                        'date': match.created_at
+                    })
+                
+                catalysts_data.append({
+                    'id': cat.id,
+                    'user_id': cat.user.id,
+                    'name': cat.user.get_full_name() or cat.user.username,
+                    'email': cat.user.email,
+                    'average_rating': cat.average_rating,
+                    'rating_count': cat.rating_count,
+                    'match_count': len(matches),
+                    'matches': matches,
+                    'report_count': Report.objects.filter(reported_user=cat.user).count()
+                })
+
+            # 2. Get all seekers
+            seekers_qs = Profile.objects.filter(role='SEEKER').exclude(user__email='admin@mattter.com').select_related('user')
+            seekers_data = []
+
+            for seeker in seekers_qs:
+                 # Get booking count
+                booking_count = Booking.objects.filter(seeker=seeker.user).count()
+                
+                seekers_data.append({
+                    'id': seeker.id,
+                    'user_id': seeker.user.id,
+                    'name': seeker.user.get_full_name() or seeker.user.username,
+                    'email': seeker.user.email,
+                    'joined_at': seeker.user.date_joined,
+                    'booking_count': booking_count,
+                    'report_count': Report.objects.filter(reported_user=seeker.user).count()
+                })
+
+            return Response({
+                'success': True,
+                'catalysts': catalysts_data,
+                'seekers': seekers_data
+            })
+
+        except Exception as e:
+            return Response(
+                {"error": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    @action(detail=False, methods=['DELETE'])
+    def delete_user(self, request):
+        """
+        Permanently delete a user account.
+        Query param: user_id
+        """
+        import django.db.transaction as transaction
+        
+        user_id = request.query_params.get('user_id')
+        if not user_id:
+            return Response(
+                {"error": "user_id is required"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            with transaction.atomic():
+                user = User.objects.get(id=user_id)
+                # prevent deleting the admin user if one exists with that email (though distinct from hardcoded frontend auth, better safe)
+                if user.email == 'admin@mattter.com':
+                     return Response(
+                        {"error": "Cannot delete root admin account"},
+                        status=status.HTTP_403_FORBIDDEN
+                    )
+
+                user.delete()
+            
+            return Response({
+                "success": True, 
+                "message": "User deleted successfully"
+            })
+            
+        except User.DoesNotExist:
+            return Response(
+                {"error": "User not found"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            return Response(
+                {"error": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
+
+
+
+    @action(detail=False, methods=['GET'])
+    def user_details(self, request):
+        """
+        Get detailed information for a specific user including full profile and report history.
+        Query param: user_id
+        """
+        user_id = request.query_params.get('user_id')
+        if not user_id:
+            return Response(
+                {"error": "user_id is required"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            user = User.objects.get(id=user_id)
+            profile = Profile.objects.get(user=user)
+            
+            # Serialize profile data
+            profile_serializer = ProfileSerializer(profile)
+            profile_data = profile_serializer.data
+            
+            # Add extra user info not in profile serializer
+            profile_data['username'] = user.username
+            profile_data['email'] = user.email
+            profile_data['first_name'] = user.first_name
+            profile_data['last_name'] = user.last_name
+            profile_data['date_joined'] = user.date_joined
+            
+            # Fetch reports filed AGAINST this user
+            reports = Report.objects.filter(reported_user=user).select_related('reporter')
+            reports_data = []
+            for report in reports:
+                reports_data.append({
+                    'id': report.id,
+                    'reporter_name': report.reporter.username,
+                    'reason': report.reason,
+                    'status': report.status,
+                    'created_at': report.created_at,
+                    'resolved_at': report.resolved_at
+                })
+
+            # Fetch Match History (Confirmed/Completed Bookings)
+            matches_data = []
+            if profile.role == 'CATALYST':
+                bookings = Booking.objects.filter(
+                    catalyst=user,
+                    status__in=['CONFIRMED', 'COMPLETED']
+                ).select_related('seeker', 'service')
+                
+                for booking in bookings:
+                    matches_data.append({
+                        'id': booking.id,
+                        'other_party_name': booking.seeker.get_full_name() or booking.seeker.username,
+                        'other_party_role': 'Seeker',
+                        'service': booking.service.name if booking.service else 'General',
+                        'status': booking.status,
+                        'date': booking.created_at
+                    })
+            elif profile.role == 'SEEKER':
+                bookings = Booking.objects.filter(
+                    seeker=user,
+                    status__in=['CONFIRMED', 'COMPLETED']
+                ).select_related('catalyst', 'service')
+                
+                for booking in bookings:
+                    matches_data.append({
+                        'id': booking.id,
+                        'other_party_name': booking.catalyst.get_full_name() or booking.catalyst.username,
+                        'other_party_role': 'Catalyst',
+                        'service': booking.service.name if booking.service else 'General',
+                        'status': booking.status,
+                        'date': booking.created_at
+                    })
+                
+            return Response({
+                'success': True,
+                'profile': profile_data,
+                'reports': reports_data,
+                'matches': matches_data
+            })
+            
+        except User.DoesNotExist:
+             return Response(
+                {"error": "User not found"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except Profile.DoesNotExist:
+             return Response(
+                {"error": "Profile not found"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            return Response(
+                {"error": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
+class ReportViewSet(viewsets.ModelViewSet):
+    queryset = Report.objects.all()
+    serializer_class = ReportSerializer
+
+    def get_permissions(self):
+        if self.action == 'create':
+            return [permissions.IsAuthenticated()]
+        return [permissions.IsAuthenticated(), permissions.IsAdminUser()]
+
+    def perform_create(self, serializer):
+        # Force status to PENDING for new reports
+        serializer.save(reporter=self.request.user, status='PENDING')
+
+    def perform_update(self, serializer):
+        # Update resolved_at if status changes to RESOLVED
+        instance = serializer.instance
+        new_status = serializer.validated_data.get('status', instance.status)
+        
+        if new_status == 'RESOLVED' and instance.status != 'RESOLVED':
+            serializer.save(resolved_at=timezone.now())
+        else:
+            serializer.save()

@@ -276,7 +276,11 @@ const CatalystSearch = () => {
                                     )}
                                 </div>
 
-                                {catalyst.bio && (
+                                {catalyst.bio_short ? (
+                                    <p className="text-sm text-text-secondary mb-3 line-clamp-2">
+                                        {catalyst.bio_short}
+                                    </p>
+                                ) : catalyst.bio && (
                                     <p className="text-sm text-text-secondary mb-3 line-clamp-2">
                                         {catalyst.bio}
                                     </p>
@@ -375,7 +379,9 @@ const CatalystSearch = () => {
                                                         {catalyst.age && <span>{catalyst.age} years</span>}
                                                     </p>
                                                 )}
-                                                {catalyst.bio && (
+                                                {catalyst.bio_short ? (
+                                                    <p className="text-sm text-gray-600 mb-2">{catalyst.bio_short}</p>
+                                                ) : catalyst.bio && (
                                                     <p className="text-sm text-gray-600 mb-2">{catalyst.bio.slice(0, 80)}{catalyst.bio.length > 80 ? '...' : ''}</p>
                                                 )}
                                                 {/* Rating */}

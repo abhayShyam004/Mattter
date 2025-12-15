@@ -13,18 +13,21 @@ const Login = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
+
         try {
             const userData = await login(username, password);
             console.log('Login userData:', userData);
 
-            // Redirect based on user role
-            if (userData.role === 'CATALYST') {
+            // Redirect based on user role/permissions
+            if (userData.is_staff || userData.is_superuser) {
+                navigate('/admin');
+            } else if (userData.role === 'CATALYST') {
                 navigate('/catalyst');
             } else {
                 navigate('/seeker');
             }
         } catch (err) {
-            setError('Invalid username or password');
+            setError(err.response?.data?.non_field_errors?.[0] || 'Invalid username or password');
         }
     };
 

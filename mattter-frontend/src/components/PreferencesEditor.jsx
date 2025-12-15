@@ -131,8 +131,14 @@ const PreferencesEditor = ({ onClose }) => {
     }
 
     return (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div className="bg-dark-surface border border-dark-border rounded-2xl p-8 max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+        <div
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+            onClick={onClose}
+        >
+            <div
+                className="relative mx-auto bg-dark-surface border border-dark-border rounded-2xl p-4 md:p-8 w-full max-w-[95vw] md:max-w-4xl max-h-[90vh] overflow-y-auto shadow-2xl"
+                onClick={(e) => e.stopPropagation()}
+            >
                 {/* Header */}
                 <div className="flex items-center justify-between mb-6">
                     <div className="flex items-center space-x-3">

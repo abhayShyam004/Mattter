@@ -1,13 +1,13 @@
 from pathlib import Path
 import os
 from dotenv import load_dotenv
+import dj_database_url
 
 # Load environment variables from .env file
 load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
@@ -19,12 +19,14 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-change-me-in-production')
 DEBUG = os.getenv('DEBUG', 'True') == 'True'
 
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '').split(',') if os.getenv('ALLOWED_HOSTS') else []
-
+# Ensure localhost is allowed if DEBUG is True and list is empty
+if DEBUG and not ALLOWED_HOSTS:
+    ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 
 # Application definition
 
 INSTALLED_APPS = [
-    'daphne', # For Channels
+    'daphne', # For Channels (Must be first for ASGI)
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -81,12 +83,12 @@ ASGI_APPLICATION = 'mattter_backend.asgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
-# NOTE: Switched to standard SQLite because GDAL is missing.
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3', 
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+    'default': dj_database_url.config(
+        default='sqlite:///' + str(BASE_DIR / 'db.sqlite3'),
+        conn_max_age=600,
+        ssl_require=False # Set to True for production if needed, but Supabase pooler handles it
+    )
 }
 
 
@@ -150,9 +152,9 @@ REST_FRAMEWORK = {
     ],
 }
 
-# CORS - Updated to allow frontend on port 5176
+# CORS
 CORS_ALLOWED_ORIGINS = os.getenv('CORS_ALLOWED_ORIGINS', '').split(',') if os.getenv('CORS_ALLOWED_ORIGINS') else []
-CORS_ALLOW_ALL_ORIGINS = not CORS_ALLOWED_ORIGINS  # Only allow all if specific origins not set
+CORS_ALLOW_ALL_ORIGINS = not CORS_ALLOWED_ORIGINS 
 
 # Channels
 CHANNEL_LAYERS = {

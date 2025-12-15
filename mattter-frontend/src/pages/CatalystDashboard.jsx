@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { User, MapPin, Heart, Calendar, Image, X, Plus, Check, Clock, Sparkles, XCircle, Trash2, Star } from 'lucide-react';
+import { User, MapPin, Heart, Calendar, Image, X, Plus, Check, Clock, Sparkles, XCircle, Trash2, Star, AlertTriangle } from 'lucide-react';
 import { API_BASE_URL } from '../config';
+import ReportModal from '../components/ReportModal';
+import OnboardingModal from '../components/OnboardingModal';
 const CatalystDashboard = () => {
     const { user } = useAuth();
     const [profile, setProfile] = useState(null);
@@ -18,6 +20,9 @@ const CatalystDashboard = () => {
     const [showMatchedSeekerModal, setShowMatchedSeekerModal] = useState(false);
     const [isViewing, setIsViewing] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
+    const [showReportModal, setShowReportModal] = useState(false);
+    const [userToReport, setUserToReport] = useState(null);
+    const [showOnboardingModal, setShowOnboardingModal] = useState(false);
 
     // Form state
     const [formData, setFormData] = useState({
@@ -93,12 +98,24 @@ const CatalystDashboard = () => {
                 latitude: data.latitude || '',
                 longitude: data.longitude || ''
             });
-            console.log('Form populated with:', {
-                bio_short: data.bio_short,
-                bio: data.bio,
-                specializations: data.specializations,
-                portfolio_count: data.portfolio_images?.length || 0
-            });
+
+            // Function to check completion for initial modal trigger
+            const checkCompletion = (pData) => {
+                let completed = 0;
+                const total = 6;
+                if (pData.bio_short) completed++;
+                if (pData.bio) completed++;
+                if (pData.specializations && pData.specializations.length > 0) completed++;
+                if (pData.portfolio_images && pData.portfolio_images.length > 0) completed++;
+                if (pData.hourly_rate) completed++;
+                if (pData.address) completed++;
+                return Math.round((completed / total) * 100);
+            };
+
+            if (checkCompletion(data) < 100) {
+                setShowOnboardingModal(true);
+            }
+
         } catch (error) {
             console.error('Error fetching profile:', error);
         } finally {
@@ -352,19 +369,19 @@ const CatalystDashboard = () => {
         <div className="min-h-screen py-8 px-4">
             <div className="max-w-7xl mx-auto space-y-8">
                 {/* Header Section */}
-                <div className="relative bg-gradient-to-br from-dark-elevated to-dark-surface border border-dark-border rounded-3xl p-8 overflow-hidden">
+                <div className="relative bg-gradient-to-br from-dark-elevated to-dark-surface border border-dark-border rounded-3xl p-4 sm:p-6 md:p-8 overflow-hidden">
                     <div className="absolute top-0 right-0 w-64 h-64 bg-accent-purple/10 rounded-full blur-3xl"></div>
                     <div className="absolute bottom-0 left-0 w-64 h-64 bg-accent-pink/10 rounded-full blur-3xl"></div>
 
                     <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-                        <div className="flex-1">
+                        <div className="flex-1 w-full">
                             <div className="flex items-center gap-3 mb-2">
-                                <h1 className="text-4xl font-bold bg-gradient-to-r from-accent-purple via-accent-pink to-accent-gold bg-clip-text text-transparent">
+                                <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold bg-gradient-to-r from-accent-purple via-accent-pink to-accent-gold bg-clip-text text-transparent">
                                     Catalyst Dashboard
                                 </h1>
-                                <Sparkles className="w-8 h-8 text-accent-gold" />
+                                <Sparkles className="w-6 h-6 sm:w-8 sm:h-8 text-accent-gold" />
                             </div>
-                            <p className="text-text-secondary text-lg">Welcome back, {profile?.user?.first_name || profile?.user?.username}!</p>
+                            <p className="text-text-secondary text-base sm:text-lg">Welcome back, {profile?.user?.first_name || profile?.user?.username}!</p>
 
                             {/* Profile Completion */}
                             <div className="mt-4">
@@ -382,16 +399,16 @@ const CatalystDashboard = () => {
                         </div>
 
                         {/* Active/Inactive Toggle */}
-                        <div className="flex flex-col items-end gap-4">
+                        <div className="flex flex-col items-start md:items-end gap-4 w-full md:w-auto">
                             <button
                                 onClick={toggleActive}
-                                className={`relative inline-flex items-center gap-3 px-6 py-3 rounded-xl font-semibold transition-all duration-300 ${formData.is_active
+                                className={`relative inline-flex items-center gap-2 sm:gap-3 px-4 sm:px-6 py-3 rounded-xl font-semibold transition-all duration-300 text-sm sm:text-base w-full md:w-auto justify-center ${formData.is_active
                                     ? 'bg-gradient-to-r from-green-500 to-green-600 hover:shadow-lg hover:shadow-green-500/50'
                                     : 'bg-gradient-to-r from-gray-600 to-gray-700 hover:shadow-lg hover:shadow-gray-500/50'
                                     }`}
                             >
-                                <div className={`w-3 h-3 rounded-full ${formData.is_active ? 'bg-white animate-pulse' : 'bg-gray-400'}`}></div>
-                                {formData.is_active ? 'Active - Accepting Requests' : 'Inactive - Not Accepting'}
+                                <div className={`w-3 h-3 rounded-full flex-shrink-0 ${formData.is_active ? 'bg-white animate-pulse' : 'bg-gray-400'}`}></div>
+                                <span className="truncate">{formData.is_active ? 'Active - Accepting Requests' : 'Inactive - Not Accepting'}</span>
                             </button>
 
                             {/* Quick Stats */}
@@ -421,22 +438,22 @@ const CatalystDashboard = () => {
                 </div>
 
                 {/* Profile Management Card */}
-                <div className="bg-dark-surface border border-dark-border rounded-3xl p-8">
-                    <div className="flex items-center justify-between mb-6">
-                        <h2 className="text-2xl font-bold flex items-center gap-2">
-                            <User className="w-6 h-6 text-accent-purple" />
+                <div className="bg-dark-surface border border-dark-border rounded-3xl p-4 sm:p-6 md:p-8">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+                        <h2 className="text-xl sm:text-2xl font-bold flex items-center gap-2">
+                            <User className="w-5 h-5 sm:w-6 sm:h-6 text-accent-purple" />
                             Profile Management
                         </h2>
                         {!isViewing && !isEditing && (
                             <button
                                 onClick={() => setIsViewing(true)}
-                                className="px-6 py-3 bg-gradient-to-r from-accent-purple to-accent-pink rounded-xl hover:shadow-lg hover:shadow-accent-purple/50 transition-all font-semibold"
+                                className="w-full sm:w-auto px-6 py-3 bg-gradient-to-r from-accent-purple to-accent-pink rounded-xl hover:shadow-lg hover:shadow-accent-purple/50 transition-all font-semibold"
                             >
                                 View Details
                             </button>
                         )}
                         {isViewing && !isEditing && (
-                            <div className="flex gap-3">
+                            <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
                                 <button
                                     onClick={() => {
                                         setIsViewing(false);
@@ -565,13 +582,24 @@ const CatalystDashboard = () => {
                                 <label className="block text-sm font-medium mb-2 text-text-secondary">Short Bio / Tagline</label>
                                 <input
                                     type="text"
-                                    maxLength={200}
                                     value={formData.bio_short}
-                                    onChange={(e) => setFormData({ ...formData, bio_short: e.target.value })}
+                                    onChange={(e) => {
+                                        const val = e.target.value;
+                                        const words = val.trim().split(/\s+/).filter(w => w.length > 0);
+                                        // Allow if word count <= 25 or if deleting (string getting shorter)
+                                        if (words.length <= 25 || val.length < formData.bio_short.length) {
+                                            setFormData({ ...formData, bio_short: val });
+                                        }
+                                    }}
                                     placeholder="e.g., Award-winning stylist with 10+ years experience"
                                     className="w-full bg-dark-elevated border border-dark-border rounded-xl px-4 py-3 text-text-primary placeholder-text-secondary/50 focus:border-accent-purple focus:ring-2 focus:ring-accent-purple/20 transition-all"
                                 />
-                                <p className="text-xs text-text-secondary mt-1">{formData.bio_short.length}/200 characters</p>
+                                <p className={`text-xs mt-1 ${formData.bio_short.trim().split(/\s+/).filter(w => w.length > 0).length >= 25
+                                    ? 'text-accent-pink'
+                                    : 'text-text-secondary'
+                                    }`}>
+                                    {formData.bio_short.trim().split(/\s+/).filter(w => w.length > 0).length}/25 words
+                                </p>
                             </div>
 
                             {/* Detailed Bio */}
@@ -640,22 +668,32 @@ const CatalystDashboard = () => {
                                         <label className="cursor-pointer">
                                             <div className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-accent-purple to-accent-pink rounded-xl hover:shadow-lg hover:shadow-accent-purple/50 transition-all">
                                                 <Image className="w-5 h-5" />
-                                                <span>Choose Image from Device</span>
+                                                <span>Choose Images from Device</span>
                                             </div>
                                             <input
                                                 type="file"
                                                 accept="image/*"
+                                                multiple
                                                 onChange={(e) => {
-                                                    const file = e.target.files[0];
-                                                    if (file && formData.portfolio_images.length < 5) {
-                                                        const reader = new FileReader();
-                                                        reader.onloadend = () => {
+                                                    const files = Array.from(e.target.files);
+                                                    const remainingSlots = 5 - formData.portfolio_images.length;
+                                                    const filesToProcess = files.slice(0, remainingSlots);
+
+                                                    if (filesToProcess.length > 0) {
+                                                        const newImagesPromises = filesToProcess.map(file => {
+                                                            return new Promise((resolve) => {
+                                                                const reader = new FileReader();
+                                                                reader.onloadend = () => resolve(reader.result);
+                                                                reader.readAsDataURL(file);
+                                                            });
+                                                        });
+
+                                                        Promise.all(newImagesPromises).then(newImages => {
                                                             setFormData({
                                                                 ...formData,
-                                                                portfolio_images: [...formData.portfolio_images, reader.result]
+                                                                portfolio_images: [...formData.portfolio_images, ...newImages]
                                                             });
-                                                        };
-                                                        reader.readAsDataURL(file);
+                                                        });
                                                     }
                                                     e.target.value = ''; // Reset input
                                                 }}
@@ -793,42 +831,43 @@ const CatalystDashboard = () => {
                                         setSelectedRequest(request);
                                         setShowRequestModal(true);
                                     }}
-                                    className="bg-dark-elevated border border-dark-border rounded-2xl p-6 hover:border-accent-purple transition-all cursor-pointer"
+                                    className="relative bg-dark-elevated border border-dark-border rounded-2xl p-4 sm:p-6 hover:border-accent-purple transition-all cursor-pointer"
                                 >
-                                    <div className="flex items-start justify-between mb-4">
-                                        <div>
-                                            <h3 className="text-lg font-semibold text-text-primary">{request.seeker?.username}</h3>
-                                            {/* Seeker Gender and Age */}
-                                            {(request.seeker?.profile?.gender || request.seeker?.profile?.age) && (
-                                                <p className="text-sm text-text-muted mt-1">
-                                                    {request.seeker?.profile?.gender && (
-                                                        <span className="capitalize">{request.seeker.profile.gender.toLowerCase()}</span>
-                                                    )}
-                                                    {request.seeker?.profile?.gender && request.seeker?.profile?.age && ' • '}
-                                                    {request.seeker?.profile?.age && (
-                                                        <span>{request.seeker.profile.age} years</span>
-                                                    )}
-                                                </p>
-                                            )}
-                                            <p className="text-sm text-text-secondary">
-                                                Requested on {new Date(request.created_at).toLocaleDateString()}
+                                    {/* Action Buttons - Stacked in top right */}
+                                    <div className="absolute top-3 right-3 flex flex-col gap-2" onClick={(e) => e.stopPropagation()}>
+                                        <button
+                                            onClick={() => handleAcceptRequest(request.id)}
+                                            className="px-3 py-1.5 text-sm bg-green-500 hover:bg-green-600 rounded-lg transition-all font-medium"
+                                        >
+                                            Accept
+                                        </button>
+                                        <button
+                                            onClick={() => handleRejectRequest(request.id)}
+                                            className="px-3 py-1.5 text-sm bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg transition-all font-medium"
+                                        >
+                                            Decline
+                                        </button>
+                                    </div>
+
+                                    {/* User Info - With padding to avoid button overlap */}
+                                    <div className="pr-20 sm:pr-24 mb-4">
+                                        <h3 className="text-base sm:text-lg font-semibold text-text-primary break-words">{request.seeker?.username}</h3>
+                                        {/* Seeker Gender and Age */}
+                                        {(request.seeker?.profile?.gender || request.seeker?.profile?.age) && (
+                                            <p className="text-sm text-text-muted mt-1">
+                                                {request.seeker?.profile?.gender && (
+                                                    <span className="capitalize">{request.seeker.profile.gender.toLowerCase()}</span>
+                                                )}
+                                                {request.seeker?.profile?.gender && request.seeker?.profile?.age && ' • '}
+                                                {request.seeker?.profile?.age && (
+                                                    <span>{request.seeker.profile.age} years</span>
+                                                )}
                                             </p>
-                                            <p className="text-xs text-accent-purple mt-1">Click to view seeker details</p>
-                                        </div>
-                                        <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
-                                            <button
-                                                onClick={() => handleAcceptRequest(request.id)}
-                                                className="px-4 py-2 bg-green-500 hover:bg-green-600 rounded-lg transition-all"
-                                            >
-                                                Accept
-                                            </button>
-                                            <button
-                                                onClick={() => handleRejectRequest(request.id)}
-                                                className="px-4 py-2 bg-red-500/20 hover:bg-red-500/30 rounded-lg transition-all"
-                                            >
-                                                Decline
-                                            </button>
-                                        </div>
+                                        )}
+                                        <p className="text-sm text-text-secondary mt-1">
+                                            Requested on {new Date(request.created_at).toLocaleDateString()}
+                                        </p>
+                                        <p className="text-xs text-accent-purple mt-1">Click to view seeker details</p>
                                     </div>
 
                                     {/* Seeker Preferences */}
@@ -961,8 +1000,8 @@ const CatalystDashboard = () => {
 
             {/* Seeker Details Modal */}
             {showRequestModal && selectedRequest && (
-                <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4" onClick={() => setShowRequestModal(false)}>
-                    <div className="bg-dark-surface border border-dark-border rounded-3xl p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+                <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-2 sm:p-4" onClick={() => setShowRequestModal(false)}>
+                    <div className="bg-dark-surface border border-dark-border rounded-3xl p-4 sm:p-6 md:p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
                         {/* Modal Header */}
                         <div className="flex items-start justify-between mb-6">
                             <div>
@@ -984,7 +1023,7 @@ const CatalystDashboard = () => {
                             {/* Basic Info */}
                             <div className="bg-dark-elevated rounded-2xl p-6 space-y-4">
                                 <h3 className="text-lg font-semibold text-text-primary mb-4">Contact Information</h3>
-                                <div className="grid md:grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
                                         <p className="text-sm text-text-secondary">Username</p>
                                         <p className="text-text-primary font-medium">{selectedRequest.seeker?.username}</p>
@@ -1045,7 +1084,7 @@ const CatalystDashboard = () => {
                             {selectedRequest.seeker_preferences && (
                                 <div className="bg-dark-elevated rounded-2xl p-6">
                                     <h3 className="text-lg font-semibold text-text-primary mb-4">Seeker Preferences</h3>
-                                    <div className="grid md:grid-cols-2 gap-4">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         {selectedRequest.seeker_preferences.consultation_type && Array.isArray(selectedRequest.seeker_preferences.consultation_type) && selectedRequest.seeker_preferences.consultation_type.length > 0 && (
                                             <div>
                                                 <p className="text-sm text-text-secondary">Consultation Type</p>
@@ -1090,9 +1129,19 @@ const CatalystDashboard = () => {
                                 </button>
                                 <button
                                     onClick={() => handleRejectRequest(selectedRequest.id)}
-                                    className="flex-1 px-6 py-3 bg-red-500/20 hover:bg-red-500/30 border border-red-500/50 rounded-xl text-red-500 font-semibold transition-all"
+                                    className="flex-1 px-6 py-3 bg-red-500/20 hover:bg-red-500/30 text-red-500 rounded-xl font-semibold transition-all"
                                 >
                                     Decline Request
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        setUserToReport(selectedRequest.seeker);
+                                        setShowReportModal(true);
+                                    }}
+                                    className="flex-none px-4 py-3 bg-red-500/10 hover:bg-red-500/20 text-red-500 rounded-xl font-semibold transition-all flex items-center justify-center"
+                                    title="Report Seeker"
+                                >
+                                    <AlertTriangle className="w-5 h-5" />
                                 </button>
                             </div>
                         </div>
@@ -1102,8 +1151,8 @@ const CatalystDashboard = () => {
 
             {/* Matched Seeker Details Modal */}
             {showMatchedSeekerModal && selectedMatchedSeeker && (
-                <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4" onClick={() => setShowMatchedSeekerModal(false)}>
-                    <div className="bg-dark-surface border border-dark-border rounded-3xl p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+                <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-2 sm:p-4" onClick={() => setShowMatchedSeekerModal(false)}>
+                    <div className="bg-dark-surface border border-dark-border rounded-3xl p-4 sm:p-6 md:p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
                         {/* Modal Header */}
                         <div className="flex items-start justify-between mb-6">
                             <div>
@@ -1125,7 +1174,7 @@ const CatalystDashboard = () => {
                             {/* Basic Info */}
                             <div className="bg-dark-elevated rounded-2xl p-6 space-y-4">
                                 <h3 className="text-lg font-semibold text-text-primary mb-4">Contact Information</h3>
-                                <div className="grid md:grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
                                         <p className="text-sm text-text-secondary">Username</p>
                                         <p className="text-text-primary font-medium">{selectedMatchedSeeker.seeker?.username}</p>
@@ -1203,7 +1252,7 @@ const CatalystDashboard = () => {
                             {selectedMatchedSeeker.seeker_preferences && (
                                 <div className="bg-dark-elevated rounded-2xl p-6">
                                     <h3 className="text-lg font-semibold text-text-primary mb-4">Seeker Preferences</h3>
-                                    <div className="grid md:grid-cols-2 gap-4">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         {selectedMatchedSeeker.seeker_preferences.consultation_type && Array.isArray(selectedMatchedSeeker.seeker_preferences.consultation_type) && selectedMatchedSeeker.seeker_preferences.consultation_type.length > 0 && (
                                             <div>
                                                 <p className="text-sm text-text-secondary">Consultation Type</p>
@@ -1320,6 +1369,17 @@ const CatalystDashboard = () => {
                                         Reopen Booking
                                     </button>
                                 )}
+
+                                <button
+                                    onClick={() => {
+                                        setUserToReport(selectedMatchedSeeker.seeker);
+                                        setShowReportModal(true);
+                                    }}
+                                    className="w-full mt-3 px-6 py-3 border border-red-500/30 text-red-500 rounded-xl font-semibold hover:bg-red-500/10 transition-all flex items-center justify-center gap-2"
+                                >
+                                    <AlertTriangle className="w-5 h-5" />
+                                    Report Seeker
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -1327,47 +1387,69 @@ const CatalystDashboard = () => {
             )}
 
             {/* Remove Seeker Confirmation Modal */}
-            {showRemoveConfirm && seekerToRemove && (
-                <div
-                    className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4"
-                    onClick={() => setShowRemoveConfirm(false)}
-                >
+            {
+                showRemoveConfirm && seekerToRemove && (
                     <div
-                        className="bg-dark-surface border border-dark-border rounded-3xl p-8 max-w-md w-full"
-                        onClick={(e) => e.stopPropagation()}
+                        className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4"
+                        onClick={() => setShowRemoveConfirm(false)}
                     >
-                        <div className="text-center">
-                            <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                                <Trash2 className="w-8 h-8 text-red-400" />
-                            </div>
+                        <div
+                            className="bg-dark-surface border border-dark-border rounded-3xl p-8 max-w-md w-full"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <div className="text-center">
+                                <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <Trash2 className="w-8 h-8 text-red-400" />
+                                </div>
 
-                            <h3 className="text-2xl font-bold text-text-primary mb-2">
-                                Remove Seeker?
-                            </h3>
+                                <h3 className="text-2xl font-bold text-text-primary mb-2">
+                                    Remove Seeker?
+                                </h3>
 
-                            <p className="text-text-secondary mb-6">
-                                Are you sure you want to remove <span className="text-text-primary font-semibold">{seekerToRemove.seeker?.username}</span> from your matched seekers? This action cannot be undone.
-                            </p>
+                                <p className="text-text-secondary mb-6">
+                                    Are you sure you want to remove <span className="text-text-primary font-semibold">{seekerToRemove.seeker?.username}</span> from your matched seekers? This action cannot be undone.
+                                </p>
 
-                            <div className="flex gap-4">
-                                <button
-                                    onClick={() => setShowRemoveConfirm(false)}
-                                    className="flex-1 px-6 py-3 bg-dark-elevated hover:bg-dark-border rounded-xl text-text-primary font-semibold transition-all"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    onClick={handleRemoveSeeker}
-                                    className="flex-1 px-6 py-3 bg-red-500 hover:bg-red-600 rounded-xl text-white font-semibold transition-all"
-                                >
-                                    Remove
-                                </button>
+                                <div className="flex gap-4">
+                                    <button
+                                        onClick={() => setShowRemoveConfirm(false)}
+                                        className="flex-1 px-6 py-3 bg-dark-elevated hover:bg-dark-border rounded-xl text-text-primary font-semibold transition-all"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        onClick={handleRemoveSeeker}
+                                        className="flex-1 px-6 py-3 bg-red-500 hover:bg-red-600 rounded-xl text-white font-semibold transition-all"
+                                    >
+                                        Remove
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
+                )
+            }
+
+            {/* Onboarding Modal */}
+            {showOnboardingModal && (
+                <OnboardingModal
+                    onClose={() => setShowOnboardingModal(false)}
+                    onStartProfile={() => {
+                        setShowOnboardingModal(false);
+                        setIsEditing(true);
+                        // Scroll to profile section
+                        window.scrollTo({ top: 300, behavior: 'smooth' });
+                    }}
+                />
             )}
-        </div>
+
+            {/* Report Modal */}
+            <ReportModal
+                isOpen={showReportModal}
+                onClose={() => setShowReportModal(false)}
+                reportedUser={userToReport}
+            />
+        </div >
     );
 };
 

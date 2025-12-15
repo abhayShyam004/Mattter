@@ -1,5 +1,6 @@
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
+from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.authtoken.models import Token
 from .models import User, Profile
 from .serializers import UserSerializer, ProfileSerializer
@@ -64,3 +65,28 @@ class RegisterView(generics.CreateAPIView):
             traceback.print_exc()
             return Response({'error': f'Registration failed: {str(e)}'}, 
                           status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class CustomAuthToken(ObtainAuthToken):
+    def post(self, request, *args, **kwargs):
+        serializer = self.serializer_class(data=request.data,
+                                           context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        user = serializer.validated_data['user']
+        token, created = Token.objects.get_or_create(user=user)
+        
+        response_data = {
+            'token': token.key,
+            'user': {
+                'id': user.id,
+                'username': user.username,
+                'email': user.email,
+                'is_staff': user.is_staff,
+                'is_superuser': user.is_superuser
+            }
+        }
+        
+        # Add role if profile exists
+        if hasattr(user, 'profile'):
+            response_data['user']['role'] = user.profile.role
+            
+        return Response(response_data)
