@@ -1,0 +1,13 @@
+Django
+djangorestframework
+django-cors-headers
+whitenoise
+dj-database-url
+python-dotenv
+channels
+daphne
+psycopg2-binary
+uvicorn
+Pillow
+requests
+redis
