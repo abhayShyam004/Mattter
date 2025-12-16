@@ -15,6 +15,8 @@ import {
 } from 'lucide-react';
 import axios from 'axios';
 import { API_BASE_URL } from '../config';
+import { useAuth } from '../context/AuthContext';
+import LoadingSpinner from './LoadingSpinner';
 
 const PreferencesEditor = ({ onClose }) => {
     const [isEditing, setIsEditing] = useState(false);
@@ -121,7 +123,7 @@ const PreferencesEditor = ({ onClose }) => {
             <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
                 <div className="bg-dark-surface border border-dark-border rounded-2xl p-8 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
                     <div className="flex items-center justify-center space-x-3 text-text-primary">
-                        <div className="w-6 h-6 border-3 border-accent-purple/30 border-t-accent-purple rounded-full animate-spin"></div>
+                        <LoadingSpinner size="md" />
                         <span>Loading preferences...</span>
                     </div>
                 </div>
@@ -337,7 +339,7 @@ const PreferencesEditor = ({ onClose }) => {
                         >
                             {saving ? (
                                 <>
-                                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                                    <LoadingSpinner size="sm" color="white" />
                                     <span>Saving...</span>
                                 </>
                             ) : (

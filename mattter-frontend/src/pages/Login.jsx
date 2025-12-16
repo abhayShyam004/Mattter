@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { LogIn, Sparkles } from 'lucide-react';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 const Login = () => {
     const [username, setUsername] = useState('');
@@ -20,6 +21,9 @@ const Login = () => {
             const userData = await login(username, password);
             console.log('Login userData:', userData);
 
+            // Stop the loading spinner before navigating
+            setIsLoading(false);
+
             // Redirect based on user role/permissions
             if (userData.is_staff || userData.is_superuser) {
                 navigate('/admin');
@@ -29,7 +33,20 @@ const Login = () => {
                 navigate('/seeker');
             }
         } catch (err) {
-            setError(err.response?.data?.non_field_errors?.[0] || 'Invalid username or password');
+            console.error('Login error:', err);
+            let errorMessage = 'Invalid username or password';
+
+            if (err.code === 'ECONNABORTED') {
+                errorMessage = 'Connection timed out. Please check your internet or try again.';
+            } else if (!err.response) {
+                errorMessage = 'Unable to connect to server. Please ensure the backend is running.';
+            } else if (err.response?.data?.non_field_errors?.[0]) {
+                errorMessage = err.response.data.non_field_errors[0];
+            } else if (err.response?.data?.detail) {
+                errorMessage = err.response.data.detail;
+            }
+
+            setError(errorMessage);
             setIsLoading(false);
         }
     };
@@ -103,10 +120,10 @@ const Login = () => {
                             className={`w-full flex items-center justify-center space-x-2 px-6 py-3 bg-gradient-to-r from-accent-purple to-accent-pink text-white rounded-lg font-medium hover:shadow-lg hover:shadow-accent-purple/50 transition-all transform hover:scale-105 ${isLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
                         >
                             {isLoading ? (
-                                <>
-                                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                    <span>Signing In...</span>
-                                </>
+                                <div className="flex items-center justify-center gap-2">
+                                    <LoadingSpinner size="sm" color="text-white" />
+                                    <span>Signing in...</span>
+                                </div>
                             ) : (
                                 <>
                                     <LogIn className="w-5 h-5" />

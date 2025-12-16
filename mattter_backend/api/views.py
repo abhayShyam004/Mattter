@@ -67,10 +67,79 @@ class ProfileViewSet(viewsets.ModelViewSet):
             
         return queryset
 
+    def retrieve(self, request, *args, **kwargs):
+        """Override retrieve to optimize single profile fetches"""
+        profile = Profile.objects.select_related('user').get(pk=kwargs['pk'])
+        serializer = self.get_serializer(profile)
+        return Response(serializer.data)
+
+    @action(detail=True, methods=['GET'], permission_classes=[permissions.AllowAny], url_path='catalyst_view')
+    def catalyst_view(self, request, pk=None):
+        """Ultra-optimized endpoint for viewing catalyst profiles - bypasses slow serializers"""
+        try:
+            profile = Profile.objects.select_related('user').only(
+                'id', 'role', 'gender', 'age', 'bio', 'bio_short', 'address',
+                'latitude', 'longitude', 'hourly_rate', 'specializations',
+                'average_rating', 'rating_count', 'portfolio_images',
+                'user__id', 'user__username', 'user__email', 'user__first_name', 'user__last_name'
+            ).get(pk=pk)
+            
+            # Manual dict construction - super fast
+            data = {
+                'id': profile.id,
+                'user': {
+                    'id': profile.user.id,
+                    'username': profile.user.username,
+                    'email': profile.user.email,
+                    'first_name': profile.user.first_name,
+                    'last_name': profile.user.last_name,
+                },
+                'role': profile.role,
+                'gender': profile.gender,
+                'age': profile.age,
+                'bio': profile.bio,
+                'bio_short': profile.bio_short,
+                'address': profile.address,
+                'latitude': profile.latitude,
+                'longitude': profile.longitude,
+                'hourly_rate': str(profile.hourly_rate) if profile.hourly_rate else None,
+                'specializations': profile.specializations or [],
+                'average_rating': float(profile.average_rating),
+                'rating_count': profile.rating_count,
+                'portfolio_images': profile.portfolio_images or [],  # Include images directly
+                'is_active': profile.is_active,
+            }
+            
+            return Response(data)
+        except Profile.DoesNotExist:
+            return Response({'error': 'Profile not found'}, status=status.HTTP_404_NOT_FOUND)
+
+    @action(detail=True, methods=['GET'], permission_classes=[permissions.AllowAny])
+    def portfolio_images(self, request, pk=None):
+        """Separate endpoint for lazy-loading portfolio images"""
+        try:
+            profile = Profile.objects.only('id', 'portfolio_images').get(pk=pk)
+            return Response({'portfolio_images': profile.portfolio_images or []})
+        except Profile.DoesNotExist:
+            return Response({'portfolio_images': []}, status=status.HTTP_404_NOT_FOUND)
+
     @action(detail=False, methods=['GET', 'PATCH'])
     def me(self, request):
         if request.user.is_authenticated:
-            profile, created = Profile.objects.get_or_create(user=request.user)
+            from django.core.cache import cache
+            cache_key = f'profile_me_{request.user.id}'
+            
+            # Use cached profile for GET requests
+            if request.method == 'GET':
+                cached_data = cache.get(cache_key)
+                if cached_data:
+                    # Add dynamic staff fields
+                    cached_data['is_staff'] = request.user.is_staff
+                    cached_data['is_superuser'] = request.user.is_superuser
+                    return Response(cached_data)
+            
+            # Fetch profile with optimized query
+            profile, created = Profile.objects.select_related('user').get_or_create(user=request.user)
             
             if request.method == 'PATCH':
                 serializer = self.get_serializer(profile, data=request.data, partial=True)
@@ -79,6 +148,8 @@ class ProfileViewSet(viewsets.ModelViewSet):
                     data = serializer.data
                     data['is_staff'] = request.user.is_staff
                     data['is_superuser'] = request.user.is_superuser
+                    # Invalidate cache after update
+                    cache.delete(cache_key)
                     return Response(data)
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
             else:
@@ -86,8 +157,46 @@ class ProfileViewSet(viewsets.ModelViewSet):
                 data = serializer.data
                 data['is_staff'] = request.user.is_staff
                 data['is_superuser'] = request.user.is_superuser
+                # Cache the profile data for 5 minutes
+                cache.set(cache_key, data, 300)
                 return Response(data)
         return Response({"detail": "Not authenticated"}, status=401)
+
+    @action(detail=False, methods=['GET'], permission_classes=[permissions.AllowAny])
+    def all_catalysts(self, request):
+        """
+        Get all catalysts with location data for map display.
+        Returns SAME structure as nearby_catalysts for consistency.
+        """
+        try:
+            catalysts = Profile.objects.filter(
+                role='CATALYST',
+                latitude__isnull=False,
+                longitude__isnull=False
+            ).select_related('user').only(
+                'id', 'latitude', 'longitude', 'bio_short', 'gender', 'age',
+                'hourly_rate', 'average_rating', 'rating_count',
+                'user__id', 'user__username', 'user__first_name', 'user__last_name'
+            )
+            
+            data = [{
+                'id': c.id,
+                'user_id': c.user.id,
+                'name': c.user.get_full_name() or c.user.username,
+                'username': c.user.username,
+                'bio': c.bio_short or '',
+                'gender': c.gender,
+                'age': c.age,
+                'latitude': c.latitude,
+                'longitude': c.longitude,
+                'hourly_rate': str(c.hourly_rate) if c.hourly_rate else None,
+                'average_rating': float(c.average_rating),
+                'rating_count': c.rating_count,
+            } for c in catalysts]
+            
+            return Response(data)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     @action(detail=False, methods=['GET'], permission_classes=[permissions.AllowAny])
     def nearby_catalysts(self, request):
@@ -111,21 +220,25 @@ class ProfileViewSet(viewsets.ModelViewSet):
             user_lon = float(lon)
             radius = float(request.query_params.get('radius', 10000))  # Default 10km
             
-            # Get only catalysts with location data
+            # Optimized query: select_related for user, only fetch needed fields
             catalysts = Profile.objects.filter(
                 role='CATALYST',
                 latitude__isnull=False,
                 longitude__isnull=False
+            ).select_related('user').only(
+                'id', 'latitude', 'longitude', 'bio_short', 'specializations',
+                'hourly_rate', 'average_rating', 'rating_count',
+                'user__id', 'user__username', 'user__first_name', 'user__last_name'
             )
             
             # Calculate distance for each catalyst and filter by radius
             nearby_catalysts = []
+            R = 6371000  # Earth's radius in meters
+            lat1 = radians(user_lat)
+            lon1 = radians(user_lon)
+            
             for catalyst in catalysts:
                 # Haversine formula
-                R = 6371000  # Earth's radius in meters
-                
-                lat1 = radians(user_lat)
-                lon1 = radians(user_lon)
                 lat2 = radians(catalyst.latitude)
                 lon2 = radians(catalyst.longitude)
                 
@@ -141,12 +254,12 @@ class ProfileViewSet(viewsets.ModelViewSet):
                         'id': catalyst.id,
                         'name': catalyst.user.get_full_name() or catalyst.user.username,
                         'username': catalyst.user.username,
-                        'bio': catalyst.bio,
+                        'bio': catalyst.bio_short or '',  # Use short bio only
                         'latitude': catalyst.latitude,
                         'longitude': catalyst.longitude,
-                        'specializations': catalyst.specializations,
+                        'specializations': catalyst.specializations[:3] if catalyst.specializations else [],  # Limit to 3
                         'hourly_rate': str(catalyst.hourly_rate) if catalyst.hourly_rate else None,
-                        'distance': round(distance),  # Distance in meters
+                        'distance': round(distance),
                         'average_rating': float(catalyst.average_rating),
                         'rating_count': catalyst.rating_count,
                     })
@@ -330,6 +443,16 @@ class BookingViewSet(viewsets.ModelViewSet):
         else:
             queryset = Booking.objects.filter(seeker=user)
         
+        # Optimize queries to prevent N+1 issues
+        # We need seeker, catalyst, and their profiles, plus the service details
+        queryset = queryset.select_related(
+            'seeker', 
+            'catalyst', 
+            'seeker__profile', 
+            'catalyst__profile', 
+            'service'
+        )
+        
         # Filter by status if provided
         status_param = self.request.query_params.get('status')
         if status_param:
@@ -447,6 +570,86 @@ class BookingViewSet(viewsets.ModelViewSet):
             "message": "Booking removed successfully"
         })
 
+    @action(detail=False, methods=['GET'])
+    def pending(self, request):
+        """
+        Get pending booking requests for seeker.
+        Ultra-lightweight: only essential fields.
+        """
+        try:
+            bookings = Booking.objects.filter(
+                seeker=request.user, 
+                status='REQUESTED'
+            ).select_related('catalyst__profile').only(
+                'id', 'created_at', 'notes', 'catalyst__id', 'catalyst__username',
+                'catalyst__profile__id', 'catalyst__profile__gender', 
+                'catalyst__profile__age', 'catalyst__profile__bio_short'
+            )
+            
+            data = [{
+                'id': b.id,
+                'created_at': b.created_at,
+                'notes': b.notes,
+                'catalyst': {
+                    'id': b.catalyst.id,
+                    'username': b.catalyst.username,
+                    'profile': {
+                        'id': b.catalyst.profile.id,
+                        'gender': b.catalyst.profile.gender,
+                        'age': b.catalyst.profile.age,
+                        'bio_short': b.catalyst.profile.bio_short,
+                    }
+                }
+            } for b in bookings]
+            
+            return Response(data)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    @action(detail=False, methods=['GET'])
+    def matched(self, request):
+        """
+        Get matched catalysts (CONFIRMED/COMPLETED) with their ratings.
+        Returns all needed data in one call.
+        """
+        try:
+            # Get matched bookings
+            bookings = Booking.objects.filter(
+                seeker=request.user,
+                status__in=['CONFIRMED', 'COMPLETED']
+            ).select_related('catalyst__profile').only(
+                'id', 'status', 'created_at', 'catalyst__id', 'catalyst__username',
+                'catalyst__profile__id', 'catalyst__profile__gender',
+                'catalyst__profile__age', 'catalyst__profile__bio_short',
+                'catalyst__profile__specializations'
+            )
+            
+            # Get all ratings for this seeker in one query
+            ratings = Rating.objects.filter(seeker=request.user).select_related('catalyst')
+            ratings_map = {r.catalyst.id: {'id': r.id, 'rating': r.rating} for r in ratings}
+            
+            data = [{
+                'id': b.id,
+                'status': b.status,
+                'created_at': b.created_at,
+                'catalyst': {
+                    'id': b.catalyst.id,
+                    'username': b.catalyst.username,
+                    'profile': {
+                        'id': b.catalyst.profile.id,
+                        'gender': b.catalyst.profile.gender,
+                        'age': b.catalyst.profile.age,
+                        'bio_short': b.catalyst.profile.bio_short,
+                        'specializations': b.catalyst.profile.specializations[:3] if b.catalyst.profile.specializations else [],
+                    }
+                },
+                'rating': ratings_map.get(b.catalyst.id)
+            } for b in bookings]
+            
+            return Response(data)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 class MessageViewSet(viewsets.ModelViewSet):
     """
     API endpoint for messages between catalyst and seeker.
@@ -544,27 +747,53 @@ class AdminDataViewSet(viewsets.ViewSet):
     @action(detail=False, methods=['GET'])
     def dashboard_stats(self, request):
         try:
-            # 1. Get all catalysts with stats
+            from django.db.models import Count, Prefetch
+            from django.core.cache import cache
+            
+            # Check cache first (cache for 2 minutes)
+            cache_key = 'admin_dashboard_stats'
+            cached_data = cache.get(cache_key)
+            if cached_data:
+                return Response(cached_data)
+            
+            # Bulk fetch all report counts (one query)
+            report_counts = {}
+            for report in Report.objects.values('reported_user_id').annotate(count=Count('id')):
+                report_counts[report['reported_user_id']] = report['count']
+            
+            # Bulk fetch all booking counts for seekers (one query)
+            seeker_booking_counts = {}
+            for booking in Booking.objects.values('seeker_id').annotate(count=Count('id')):
+                seeker_booking_counts[booking['seeker_id']] = booking['count']
+            
+            # Get all confirmed/completed bookings with related data (one query)
+            all_matches = Booking.objects.filter(
+                status__in=['CONFIRMED', 'COMPLETED']
+            ).select_related('seeker', 'catalyst').values(
+                'catalyst_id', 'seeker__username', 'seeker__email',
+                'seeker__first_name', 'seeker__last_name', 'status', 'created_at'
+            )
+            
+            # Group matches by catalyst
+            catalyst_matches = {}
+            for match in all_matches:
+                catalyst_id = match['catalyst_id']
+                if catalyst_id not in catalyst_matches:
+                    catalyst_matches[catalyst_id] = []
+                seeker_name = f"{match['seeker__first_name']} {match['seeker__last_name']}".strip() or match['seeker__username']
+                catalyst_matches[catalyst_id].append({
+                    'seeker_name': seeker_name,
+                    'seeker_email': match['seeker__email'],
+                    'status': match['status'],
+                    'date': match['created_at']
+                })
+            
+            # 1. Get all catalysts with stats (one query)
             catalysts_qs = Profile.objects.filter(role='CATALYST').select_related('user')
             catalysts_data = []
             
             for cat in catalysts_qs:
-                # Get matches for this catalyst
-                # Matches are confirmed or completed bookings
-                matches_qs = Booking.objects.filter(
-                    catalyst=cat.user, 
-                    status__in=['CONFIRMED', 'COMPLETED']
-                ).select_related('seeker')
-                
-                matches = []
-                for match in matches_qs:
-                    matches.append({
-                        'seeker_name': match.seeker.get_full_name() or match.seeker.username,
-                        'seeker_email': match.seeker.email,
-                        'status': match.status,
-                        'date': match.created_at
-                    })
-                
+                matches = catalyst_matches.get(cat.user.id, [])
                 catalysts_data.append({
                     'id': cat.id,
                     'user_id': cat.user.id,
@@ -574,32 +803,34 @@ class AdminDataViewSet(viewsets.ViewSet):
                     'rating_count': cat.rating_count,
                     'match_count': len(matches),
                     'matches': matches,
-                    'report_count': Report.objects.filter(reported_user=cat.user).count()
+                    'report_count': report_counts.get(cat.user.id, 0)
                 })
 
-            # 2. Get all seekers
+            # 2. Get all seekers (one query)
             seekers_qs = Profile.objects.filter(role='SEEKER').exclude(user__email='admin@mattter.com').select_related('user')
             seekers_data = []
 
             for seeker in seekers_qs:
-                 # Get booking count
-                booking_count = Booking.objects.filter(seeker=seeker.user).count()
-                
                 seekers_data.append({
                     'id': seeker.id,
                     'user_id': seeker.user.id,
                     'name': seeker.user.get_full_name() or seeker.user.username,
                     'email': seeker.user.email,
                     'joined_at': seeker.user.date_joined,
-                    'booking_count': booking_count,
-                    'report_count': Report.objects.filter(reported_user=seeker.user).count()
+                    'booking_count': seeker_booking_counts.get(seeker.user.id, 0),
+                    'report_count': report_counts.get(seeker.user.id, 0)
                 })
 
-            return Response({
+            response_data = {
                 'success': True,
                 'catalysts': catalysts_data,
                 'seekers': seekers_data
-            })
+            }
+            
+            # Cache for 2 minutes
+            cache.set(cache_key, response_data, 120)
+            
+            return Response(response_data)
 
         except Exception as e:
             return Response(

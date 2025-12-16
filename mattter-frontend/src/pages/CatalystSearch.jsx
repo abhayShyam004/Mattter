@@ -7,6 +7,7 @@ import L from 'leaflet';
 import { API_BASE_URL } from '../config';
 import { useAuth } from '../context/AuthContext';
 import StarRating from '../components/StarRating';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 // Fix for default marker icons
 delete L.Icon.Default.prototype._getIconUrl;
@@ -99,43 +100,31 @@ const CatalystSearch = () => {
     const fetchCatalysts = async (location) => {
         setLoadingCatalysts(true);
         try {
-            const token = localStorage.getItem('token');
-
-            // Fetch all catalysts for map (no radius limit)
-            const allResponse = await fetch(
-                `${API_BASE_URL}/api/profiles/?role=CATALYST`,
-                {
-                    headers: {
-                        'Authorization': token ? `Token ${token}` : '',
-                    },
-                }
-            );
-
-            // Fetch nearby catalysts (10km) for list
+            // Both endpoints now return the same structure
             const nearbyResponse = await fetch(
-                `${API_BASE_URL}/api/profiles/?role=CATALYST&lat=${location.latitude}&lon=${location.longitude}&radius=10000`,
-                {
-                    headers: {
-                        'Authorization': token ? `Token ${token}` : '',
-                    },
-                }
+                `${API_BASE_URL}/api/profiles/nearby_catalysts/?lat=${location.latitude}&lon=${location.longitude}&radius=10000`
             );
 
-            if (allResponse.ok && nearbyResponse.ok) {
-                const allData = await allResponse.json();
+            const allResponse = await fetch(
+                `${API_BASE_URL}/api/profiles/all_catalysts/`
+            );
+
+            if (nearbyResponse.ok && allResponse.ok) {
                 const nearbyData = await nearbyResponse.json();
+                const allData = await allResponse.json();
 
-                // Filter out catalysts without location for map
-                const catalystsWithLocation = allData.filter(c => c.latitude && c.longitude);
+                // nearby_catalysts returns {catalysts: [...]}
+                const nearbyCatalystsList = nearbyData.catalysts || [];
 
-                setAllCatalysts(catalystsWithLocation);
-                setNearbyCatalysts(nearbyData);
-                setFilteredCatalysts(nearbyData);
+                // all_catalysts returns array directly
+                setNearbyCatalysts(nearbyCatalystsList);
+                setFilteredCatalysts(nearbyCatalystsList);
+                setAllCatalysts(allData); // Already an array
             } else {
                 console.error('Failed to fetch catalysts');
             }
         } catch (error) {
-            console.error('Error fetching catalysts:', error);
+            console.error('Error:', error);
         } finally {
             setLoadingCatalysts(false);
         }
@@ -176,7 +165,7 @@ const CatalystSearch = () => {
         return (
             <div className="min-h-screen flex items-center justify-center bg-dark-bg">
                 <div className="text-center">
-                    <div className="w-12 h-12 border-4 border-accent-purple/30 border-t-accent-purple rounded-full animate-spin mx-auto mb-4" />
+                    <LoadingSpinner size="lg" className="mx-auto mb-4" />
                     <p className="text-text-secondary">Requesting location access...</p>
                 </div>
             </div>
@@ -233,7 +222,7 @@ const CatalystSearch = () => {
                     {/* Loading State */}
                     {loadingCatalysts && (
                         <div className="text-center py-8">
-                            <div className="w-8 h-8 border-2 border-accent-purple/30 border-t-accent-purple rounded-full animate-spin mx-auto mb-2" />
+                            <LoadingSpinner size="md" className="mx-auto mb-2" />
                             <p className="text-text-secondary text-sm">Loading catalysts...</p>
                         </div>
                     )}
@@ -371,7 +360,7 @@ const CatalystSearch = () => {
                                     >
                                         <Popup className="custom-popup">
                                             <div className="min-w-[200px]">
-                                                <strong className="block mb-2 text-base">{catalyst.user?.username || 'Unknown'}</strong>
+                                                <strong className="block mb-2 text-base">{catalyst.username || catalyst.name || 'Unknown'}</strong>
                                                 {(catalyst.gender || catalyst.age) && (
                                                     <p className="text-xs text-gray-600 mb-2">
                                                         {catalyst.gender && <span className="capitalize">{catalyst.gender.toLowerCase()}</span>}
@@ -379,12 +368,9 @@ const CatalystSearch = () => {
                                                         {catalyst.age && <span>{catalyst.age} years</span>}
                                                     </p>
                                                 )}
-                                                {catalyst.bio_short ? (
-                                                    <p className="text-sm text-gray-600 mb-2">{catalyst.bio_short}</p>
-                                                ) : catalyst.bio && (
-                                                    <p className="text-sm text-gray-600 mb-2">{catalyst.bio.slice(0, 80)}{catalyst.bio.length > 80 ? '...' : ''}</p>
+                                                {catalyst.bio && (
+                                                    <p className="text-sm text-gray-600 mb-2">{catalyst.bio}</p>
                                                 )}
-                                                {/* Rating */}
                                                 <div className="mb-2">
                                                     <StarRating
                                                         rating={catalyst.average_rating || 0}
@@ -401,10 +387,8 @@ const CatalystSearch = () => {
                                                     </p>
                                                 )}
                                                 <button
-                                                    onClick={() => {
-                                                        window.location.href = `/catalyst/${catalyst.id}`;
-                                                    }}
-                                                    className="w-full px-3 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-sm rounded-lg font-medium hover:shadow-lg transition-all"
+                                                    onClick={() => navigate(`/catalyst/${catalyst.id}`)}
+                                                    className="mt-2 w-full px-3 py-1.5 bg-gradient-to-r from-accent-purple to-accent-pink text-white rounded-lg text-sm hover:shadow-lg transition-all"
                                                 >
                                                     View Profile
                                                 </button>

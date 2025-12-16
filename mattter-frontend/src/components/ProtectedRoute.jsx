@@ -1,6 +1,8 @@
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
+import LoadingSpinner from './LoadingSpinner';
+
 const ProtectedRoute = ({ children, allowedRoles }) => {
     const { user, loading } = useAuth();
     const location = useLocation();
@@ -8,7 +10,7 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
     if (loading) {
         return (
             <div className="flex justify-center items-center h-screen bg-dark-bg">
-                <div className="w-12 h-12 border-4 border-accent-purple/30 border-t-accent-purple rounded-full animate-spin"></div>
+                <LoadingSpinner size="lg" />
             </div>
         );
     }

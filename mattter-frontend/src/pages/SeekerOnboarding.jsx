@@ -14,10 +14,13 @@ import {
     Shirt,
     Laptop,
     ChevronRight,
-    ChevronLeft
+    ChevronLeft,
+    Check, // Added Check icon
+    DollarSign // Added DollarSign icon
 } from 'lucide-react';
 import axios from 'axios';
 import { API_BASE_URL } from '../config';
+import LoadingSpinner from '../components/LoadingSpinner'; // Added LoadingSpinner import
 
 const SeekerOnboarding = () => {
     const navigate = useNavigate();
@@ -156,17 +159,17 @@ const SeekerOnboarding = () => {
                                             : step === currentStep
                                                 ? 'bg-accent-pink text-white'
                                                 : 'bg-dark-elevated text-text-muted'
-                                            }`}>
+                                            } `}>
                                             {step < currentStep ? <CheckCircle2 className="w-6 h-6" /> : step}
                                         </div>
                                         <span className={`absolute top-full mt-3 text-xs font-medium whitespace-nowrap transition-colors duration-300 ${step <= currentStep ? 'text-text-primary' : 'text-text-muted'
-                                            }`}>
+                                            } `}>
                                             {label}
                                         </span>
                                     </div>
                                     {step < 3 && (
                                         <div className={`w-24 sm:w-32 h-1 mx-2 transition-colors duration-300 ${step < currentStep ? 'bg-accent-purple' : 'bg-dark-border'
-                                            }`}></div>
+                                            } `}></div>
                                     )}
                                 </React.Fragment>
                             );
@@ -201,7 +204,7 @@ const SeekerOnboarding = () => {
                                     className={`p-6 rounded-xl border-2 transition-all text-left ${formData.consultation_type.includes('physical')
                                         ? 'bg-accent-purple/20 border-accent-purple'
                                         : 'bg-dark-elevated border-dark-border hover:border-accent-purple/50'
-                                        }`}
+                                        } `}
                                 >
                                     <Users className="w-12 h-12 text-accent-purple mb-4" />
                                     <h3 className="text-xl font-bold text-text-primary mb-2">Physical (In-Person)</h3>
@@ -216,7 +219,7 @@ const SeekerOnboarding = () => {
                                     className={`p-6 rounded-xl border-2 transition-all text-left ${formData.consultation_type.includes('online')
                                         ? 'bg-accent-blue/20 border-accent-blue'
                                         : 'bg-dark-elevated border-dark-border hover:border-accent-blue/50'
-                                        }`}
+                                        } `}
                                 >
                                     <Laptop className="w-12 h-12 text-accent-blue mb-4" />
                                     <h3 className="text-xl font-bold text-text-primary mb-2">Online (Virtual)</h3>
@@ -247,7 +250,7 @@ const SeekerOnboarding = () => {
                                     className={`w-full p-6 rounded-xl border-2 transition-all text-left ${formData.service_scope === 'complete_rebranding'
                                         ? 'bg-accent-pink/20 border-accent-pink'
                                         : 'bg-dark-elevated border-dark-border hover:border-accent-pink/50'
-                                        }`}
+                                        } `}
                                 >
                                     <div className="flex items-start justify-between mb-4">
                                         <div>
@@ -287,7 +290,7 @@ const SeekerOnboarding = () => {
                                     className={`w-full p-6 rounded-xl border-2 transition-all text-left ${formData.service_scope === 'wardrobe_only'
                                         ? 'bg-accent-gold/20 border-accent-gold'
                                         : 'bg-dark-elevated border-dark-border hover:border-accent-gold/50'
-                                        }`}
+                                        } `}
                                 >
                                     <div className="flex items-start justify-between">
                                         <div>
@@ -329,10 +332,10 @@ const SeekerOnboarding = () => {
                                             className={`p-4 rounded-lg border-2 transition-all ${formData.budget_catalyst === range
                                                 ? 'bg-accent-purple/20 border-accent-purple text-accent-purple'
                                                 : 'bg-dark-elevated border-dark-border text-text-secondary hover:border-accent-purple/50'
-                                                }`}
+                                                } `}
                                         >
                                             <div className="font-semibold">
-                                                {range === 'free' ? 'Free' : `₹${range}`}
+                                                {range === 'free' ? 'Free' : `₹${range} `}
                                             </div>
                                             {range === 'free' && (
                                                 <div className="text-xs mt-1 opacity-75">Pro-bono</div>
@@ -359,7 +362,7 @@ const SeekerOnboarding = () => {
                                             className={`p-4 rounded-lg border-2 transition-all ${formData.budget_personal === range
                                                 ? 'bg-accent-pink/20 border-accent-pink text-accent-pink'
                                                 : 'bg-dark-elevated border-dark-border text-text-secondary hover:border-accent-pink/50'
-                                                }`}
+                                                } `}
                                         >
                                             <div className="font-semibold">₹{range}</div>
                                         </button>
@@ -399,7 +402,7 @@ const SeekerOnboarding = () => {
                                     className={`w-full sm:w-auto flex items-center justify-center space-x-2 px-6 py-3 rounded-lg font-medium transition-all ${isStepValid()
                                         ? 'bg-gradient-to-r from-accent-purple to-accent-pink text-white hover:shadow-lg hover:shadow-accent-purple/50'
                                         : 'bg-dark-elevated text-text-muted cursor-not-allowed'
-                                        }`}
+                                        } `}
                                 >
                                     <span>Next</span>
                                     <ChevronRight className="w-5 h-5" />
@@ -411,13 +414,13 @@ const SeekerOnboarding = () => {
                                     className={`w-full sm:w-auto flex items-center justify-center space-x-2 px-6 py-3 rounded-lg font-medium transition-all ${isStepValid() && !saving
                                         ? 'bg-gradient-to-r from-accent-purple to-accent-pink text-white hover:shadow-lg hover:shadow-accent-purple/50'
                                         : 'bg-dark-elevated text-text-muted cursor-not-allowed'
-                                        }`}
+                                        } `}
                                 >
                                     {saving ? (
-                                        <>
-                                            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                        <div className="flex items-center gap-2">
+                                            <LoadingSpinner size="sm" color="text-white" />
                                             <span>Saving...</span>
-                                        </>
+                                        </div>
                                     ) : (
                                         <>
                                             <span>Complete Setup</span>

@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { UserPlus, Sparkles, X, FileText } from 'lucide-react';
 import { API_BASE_URL } from '../config';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 const Register = () => {
     const [formData, setFormData] = useState({
@@ -270,10 +271,10 @@ const Register = () => {
                             className={`w-full flex items-center justify-center space-x-2 px-6 py-3 bg-gradient-to-r from-accent-blue to-accent-gold text-white rounded-lg font-medium hover:shadow-lg hover:shadow-accent-blue/50 transition-all transform hover:scale-105 ${isLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
                         >
                             {isLoading ? (
-                                <>
-                                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                <div className="flex items-center justify-center gap-2">
+                                    <LoadingSpinner size="sm" color="text-white" />
                                     <span>Creating Account...</span>
-                                </>
+                                </div>
                             ) : (
                                 <>
                                     <UserPlus className="w-5 h-5" />

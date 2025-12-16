@@ -5,6 +5,7 @@ import {
     Clock, ArrowLeft, Send, Image as ImageIcon, AlertTriangle
 } from 'lucide-react';
 import { API_BASE_URL } from '../config';
+import LoadingSpinner from '../components/LoadingSpinner';
 import StarRating from '../components/StarRating';
 import ReportModal from '../components/ReportModal';
 
@@ -27,7 +28,9 @@ const CatalystProfile = () => {
     const fetchCatalystProfile = async () => {
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch(`${API_BASE_URL}/api/profiles/${id}/`, {
+
+            // Use optimized catalyst_view endpoint (returns all data including images in one fast call)
+            const response = await fetch(`${API_BASE_URL}/api/profiles/${id}/catalyst_view/`, {
                 headers: {
                     'Authorization': token ? `Token ${token}` : ''
                 }
@@ -35,14 +38,17 @@ const CatalystProfile = () => {
 
             if (response.ok) {
                 const data = await response.json();
-                setCatalyst(data);
-                if (data.portfolio_images && data.portfolio_images.length > 0) {
+                setCatalyst(data); // Now includes is_active from backend
+                if (data.portfolio_images?.length > 0) {
                     setSelectedImage(data.portfolio_images[0]);
                 }
+                setLoading(false);
+            } else {
+                console.error('Failed to fetch catalyst profile');
+                setLoading(false);
             }
         } catch (error) {
             console.error('Error fetching catalyst:', error);
-        } finally {
             setLoading(false);
         }
     };
@@ -121,7 +127,7 @@ const CatalystProfile = () => {
     if (loading) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-dark-bg">
-                <div className="w-12 h-12 border-4 border-accent-purple/30 border-t-accent-purple rounded-full animate-spin"></div>
+                <LoadingSpinner size="lg" />
             </div>
         );
     }
@@ -338,7 +344,7 @@ const CatalystProfile = () => {
                                 >
                                     {sending ? (
                                         <>
-                                            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                                            <LoadingSpinner size="sm" color="text-white" />
                                             Sending...
                                         </>
                                     ) : message.startsWith('✓') ? (

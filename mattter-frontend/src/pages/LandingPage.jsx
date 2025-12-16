@@ -2,10 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
-import { Sparkles, Users, MapPin, Zap, Heart, Calendar, ChevronRight, Coins } from 'lucide-react';
+import { Sparkles, Users, MapPin, Zap, Heart, Calendar, ChevronRight, Coins, Search, ArrowRight, Star, ChevronDown, Check, User } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import { API_BASE_URL } from '../config';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 // Fix for default marker icons in React-Leaflet
 delete L.Icon.Default.prototype._getIconUrl;
@@ -56,6 +57,33 @@ const LandingPage = () => {
     const [loadingCatalysts, setLoadingCatalysts] = useState(false);
     const [catalystError, setCatalystError] = useState(null);
 
+    // Function to get user's current location
+    const getLocation = () => {
+        setLoadingLocation(true);
+        setLocationError(null);
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    setUserLocation({
+                        latitude: position.coords.latitude,
+                        longitude: position.coords.longitude,
+                    });
+                    setLoadingLocation(false);
+                },
+                (error) => {
+                    setLocationError(error.message);
+                    setLoadingLocation(false);
+                    // Default to a sample location if permission denied
+                    setUserLocation({ latitude: 28.6139, longitude: 77.2090 }); // New Delhi as fallback
+                }
+            );
+        } else {
+            setLocationError('Geolocation is not supported by your browser');
+            setLoadingLocation(false);
+            setUserLocation({ latitude: 28.6139, longitude: 77.2090 }); // New Delhi as fallback
+        }
+    };
+
     // Fetch nearby catalysts when user location is available
     useEffect(() => {
         if (userLocation) {
@@ -98,27 +126,8 @@ const LandingPage = () => {
     };
 
     useEffect(() => {
-        // Request user location
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(
-                (position) => {
-                    setUserLocation({
-                        latitude: position.coords.latitude,
-                        longitude: position.coords.longitude,
-                    });
-                    setLoadingLocation(false);
-                },
-                (error) => {
-                    setLocationError(error.message);
-                    setLoadingLocation(false);
-                    // Default to a sample location if permission denied
-                    setUserLocation({ latitude: 28.6139, longitude: 77.2090 }); // New Delhi as fallback
-                }
-            );
-        } else {
-            setLocationError('Geolocation is not supported by your browser');
-            setLoadingLocation(false);
-        }
+        // Request user location on component mount
+        getLocation();
     }, []);
 
     return (
@@ -267,10 +276,10 @@ const LandingPage = () => {
 
                     <div className="bg-dark-surface border border-dark-border rounded-2xl overflow-hidden">
                         {loadingLocation ? (
-                            <div className="h-96 flex items-center justify-center">
+                            <div className="min-h-[300px] flex items-center justify-center">
                                 <div className="text-center">
-                                    <div className="w-12 h-12 border-4 border-accent-purple border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                                    <p className="text-text-secondary">Loading map...</p>
+                                    <LoadingSpinner size="lg" className="mx-auto mb-4" />
+                                    <p className="text-gray-400">Loading nearby catalysts...</p>
                                 </div>
                             </div>
                         ) : locationError && !userLocation ? (
@@ -282,7 +291,7 @@ const LandingPage = () => {
                                         Enable location access to discover nearby catalysts
                                     </p>
                                     <button
-                                        onClick={() => window.location.reload()}
+                                        onClick={getLocation}
                                         className="px-6 py-3 bg-gradient-to-r from-accent-purple to-accent-pink text-white rounded-lg font-medium hover:shadow-lg transition-all"
                                     >
                                         Enable Location
@@ -345,7 +354,9 @@ const LandingPage = () => {
                         <div className="mt-6 text-center">
                             {loadingCatalysts ? (
                                 <p className="text-text-secondary">
-                                    <span className="inline-block w-4 h-4 border-2 border-accent-purple border-t-transparent rounded-full animate-spin mr-2 align-middle"></span>
+                                    <span className="inline-block mr-2 align-middle">
+                                        <LoadingSpinner size="sm" color="text-accent-purple" />
+                                    </span>
                                     Loading nearby catalysts...
                                 </p>
                             ) : catalystError ? (

@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { API_BASE_URL } from '../config';
 import { Link, useNavigate } from 'react-router-dom';
+import LoadingSpinner from '../components/LoadingSpinner';
 import {
     Users, Star, Activity, AlertTriangle, Trash2, Search,
     X, CheckCircle, ChevronRight, Filter, ChevronDown, User, Calendar,
@@ -94,103 +95,103 @@ const UserDetailModal = ({ user, onClose, onDelete }) => {
                     <div className="space-y-6">
 
                         {/* Loading State */}
-                        {user.loadingDetails && (
+                        {user.loadingDetails ? (
                             <div className="flex justify-center py-12">
-                                <div className="w-8 h-8 border-3 border-accent-purple/30 border-t-accent-purple rounded-full animate-spin"></div>
+                                <LoadingSpinner size="md" />
                             </div>
-                        )}
-
-
-                        {/* Status indicators */}
-                        {/* Portfolio Images (Catalysts only) */}
-                        {!user.loadingDetails && user.portfolio_images && user.portfolio_images.length > 0 && (
-                            <div>
-                                <h3 className="text-lg font-bold text-text-primary mb-4 flex items-center">
-                                    <Sparkles className="w-5 h-5 text-accent-gold mr-2" />
-                                    Portfolio
-                                </h3>
-                                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
-                                    {user.portfolio_images.map((img, idx) => (
-                                        <div
-                                            key={idx}
-                                            onClick={() => setPreviewImage(img)}
-                                            className="group relative aspect-square rounded-lg overflow-hidden border border-dark-border cursor-pointer hover:border-accent-purple transition-all"
-                                        >
-                                            <img
-                                                src={img}
-                                                alt={`Portfolio ${idx + 1}`}
-                                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                                            />
-                                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                                <Search className="w-5 h-5 text-white" />
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Reports Section (if any) */}
-                        {!user.loadingDetails && user.reports && user.reports.length > 0 && (
-                            <div>
-                                <h3 className="text-lg font-bold text-text-primary mb-4 flex items-center">
-                                    <AlertTriangle className="w-5 h-5 text-red-400 mr-2" />
-                                    Reports Against Usage
-                                </h3>
-                                <div className="space-y-3">
-                                    {user.reports.map(report => (
-                                        <div key={report.id} className="bg-red-900/10 border border-red-900/30 p-4 rounded-xl">
-                                            <div className="flex justify-between items-start mb-2">
-                                                <span className="text-red-400 font-medium text-sm">Reason: {report.reason}</span>
-                                                <span className={`text-xs px-2 py-1 rounded-full ${report.status === 'RESOLVED' ? 'bg-green-900/20 text-green-400' : 'bg-yellow-900/20 text-yellow-400'}`}>
-                                                    {report.status}
-                                                </span>
-                                            </div>
-                                            <p className="text-text-secondary text-xs">
-                                                Reported by {report.reporter_name} on {new Date(report.created_at).toLocaleDateString()}
-                                            </p>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Match History */}
-                        {!user.loadingDetails && user.matches && user.matches.length > 0 && (
-                            <div>
-                                <h3 className="text-lg font-bold text-text-primary mb-4 flex items-center">
-                                    <Activity className="w-5 h-5 text-accent-blue mr-2" />
-                                    Match History
-                                </h3>
-                                <div className="bg-dark-elevated rounded-xl overflow-hidden">
-                                    <table className="w-full text-sm text-left">
-                                        <thead className="bg-dark-border/30 text-text-secondary font-medium">
-                                            <tr>
-                                                <th className="px-4 py-3">Counterpart</th>
-                                                <th className="px-4 py-3">Service</th>
-                                                <th className="px-4 py-3">Date</th>
-                                                <th className="px-4 py-3 text-right">Status</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-dark-border/50">
-                                            {user.matches.map((match) => (
-                                                <tr key={match.id} className="hover:bg-white/5 transition-colors">
-                                                    <td className="px-4 py-3 font-medium text-text-primary">{match.other_party_name}</td>
-                                                    <td className="px-4 py-3 text-text-secondary">{match.service}</td>
-                                                    <td className="px-4 py-3 text-text-secondary">{new Date(match.date).toLocaleDateString()}</td>
-                                                    <td className="px-4 py-3 text-right">
-                                                        <span className="px-2 py-1 bg-green-900/20 text-green-400 rounded text-xs">
-                                                            {match.status}
-                                                        </span>
-                                                    </td>
-                                                </tr>
+                        ) : (
+                            <>
+                                {/* Status indicators */}
+                                {/* Portfolio Images (Catalysts only) */}
+                                {user.portfolio_images && user.portfolio_images.length > 0 && (
+                                    <div>
+                                        <h3 className="text-lg font-bold text-text-primary mb-4 flex items-center">
+                                            <Sparkles className="w-5 h-5 text-accent-gold mr-2" />
+                                            Portfolio
+                                        </h3>
+                                        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
+                                            {user.portfolio_images.map((img, idx) => (
+                                                <div
+                                                    key={idx}
+                                                    onClick={() => setPreviewImage(img)}
+                                                    className="group relative aspect-square rounded-lg overflow-hidden border border-dark-border cursor-pointer hover:border-accent-purple transition-all"
+                                                >
+                                                    <img
+                                                        src={img}
+                                                        alt={`Portfolio ${idx + 1}`}
+                                                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                                                    />
+                                                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                                        <Search className="w-5 h-5 text-white" />
+                                                    </div>
+                                                </div>
                                             ))}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        )}
+                                        </div>
+                                    </div>
+                                )}
 
+                                {/* Reports Section (if any) */}
+                                {user.reports && user.reports.length > 0 && (
+                                    <div>
+                                        <h3 className="text-lg font-bold text-text-primary mb-4 flex items-center">
+                                            <AlertTriangle className="w-5 h-5 text-red-400 mr-2" />
+                                            Reports Against Usage
+                                        </h3>
+                                        <div className="space-y-3">
+                                            {user.reports.map(report => (
+                                                <div key={report.id} className="bg-red-900/10 border border-red-900/30 p-4 rounded-xl">
+                                                    <div className="flex justify-between items-start mb-2">
+                                                        <span className="text-red-400 font-medium text-sm">Reason: {report.reason}</span>
+                                                        <span className={`text-xs px-2 py-1 rounded-full ${report.status === 'RESOLVED' ? 'bg-green-900/20 text-green-400' : 'bg-yellow-900/20 text-yellow-400'}`}>
+                                                            {report.status}
+                                                        </span>
+                                                    </div>
+                                                    <p className="text-text-secondary text-xs">
+                                                        Reported by {report.reporter_name} on {new Date(report.created_at).toLocaleDateString()}
+                                                    </p>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Match History */}
+                                {user.matches && user.matches.length > 0 && (
+                                    <div>
+                                        <h3 className="text-lg font-bold text-text-primary mb-4 flex items-center">
+                                            <Activity className="w-5 h-5 text-accent-blue mr-2" />
+                                            Match History
+                                        </h3>
+                                        <div className="bg-dark-elevated rounded-xl overflow-hidden">
+                                            <table className="w-full text-sm text-left">
+                                                <thead className="bg-dark-border/30 text-text-secondary font-medium">
+                                                    <tr>
+                                                        <th className="px-4 py-3">Counterpart</th>
+                                                        <th className="px-4 py-3">Service</th>
+                                                        <th className="px-4 py-3">Date</th>
+                                                        <th className="px-4 py-3 text-right">Status</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="divide-y divide-dark-border/50">
+                                                    {user.matches.map((match) => (
+                                                        <tr key={match.id} className="hover:bg-white/5 transition-colors">
+                                                            <td className="px-4 py-3 font-medium text-text-primary">{match.other_party_name}</td>
+                                                            <td className="px-4 py-3 text-text-secondary">{match.service}</td>
+                                                            <td className="px-4 py-3 text-text-secondary">{new Date(match.date).toLocaleDateString()}</td>
+                                                            <td className="px-4 py-3 text-right">
+                                                                <span className="px-2 py-1 bg-green-900/20 text-green-400 rounded text-xs">
+                                                                    {match.status}
+                                                                </span>
+                                                            </td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                )}
+                            </>
+                        )}
                     </div>
 
                     {/* Actions */}
@@ -357,7 +358,7 @@ const DeleteConfirmationModal = ({ isOpen, onClose, onConfirm, userName, isDelet
                         >
                             {isDeleting ? (
                                 <>
-                                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                                    <LoadingSpinner size="sm" color="text-white" />
                                     <span>Deleting...</span>
                                 </>
                             ) : (
@@ -421,21 +422,61 @@ const AdminDashboard = () => {
     };
 
     const fetchDashboardData = async () => {
+        // Try to load from localStorage cache first for instant display
+        const cachedStats = localStorage.getItem('admin_stats_cache');
+        const cachedReports = localStorage.getItem('admin_reports_cache');
+        const cacheTime = localStorage.getItem('admin_cache_time');
+        const cacheValid = cacheTime && (Date.now() - parseInt(cacheTime)) < 60000; // 1 minute cache
+
+        if (cachedStats && cachedReports && cacheValid) {
+            setStats(JSON.parse(cachedStats));
+            setReports(JSON.parse(cachedReports));
+            setLoading(false);
+            // Still fetch in background to update data
+            fetchDashboardDataBackground();
+            return;
+        }
+
         setLoading(true);
         try {
-            // Fetch Stats and Users
-            const statsRes = await axios.get(`${API_BASE_URL}/api/admin-data/dashboard_stats/`);
-            setStats(statsRes.data);
+            // Run both API calls in parallel to halve load time
+            const [statsRes, reportsRes] = await Promise.all([
+                axios.get(`${API_BASE_URL}/api/admin-data/dashboard_stats/`),
+                axios.get(`${API_BASE_URL}/api/reports/`)
+            ]);
 
-            // Fetch Reports
-            const reportsRes = await axios.get(`${API_BASE_URL}/api/reports/`);
+            setStats(statsRes.data);
             setReports(reportsRes.data);
+
+            // Cache for next load
+            localStorage.setItem('admin_stats_cache', JSON.stringify(statsRes.data));
+            localStorage.setItem('admin_reports_cache', JSON.stringify(reportsRes.data));
+            localStorage.setItem('admin_cache_time', Date.now().toString());
 
         } catch (err) {
             console.error("Failed to fetch admin data", err);
             setError("Failed to load dashboard data.");
         } finally {
             setLoading(false);
+        }
+    };
+
+    // Background fetch to update cache without blocking UI
+    const fetchDashboardDataBackground = async () => {
+        try {
+            const [statsRes, reportsRes] = await Promise.all([
+                axios.get(`${API_BASE_URL}/api/admin-data/dashboard_stats/`),
+                axios.get(`${API_BASE_URL}/api/reports/`)
+            ]);
+
+            setStats(statsRes.data);
+            setReports(reportsRes.data);
+
+            localStorage.setItem('admin_stats_cache', JSON.stringify(statsRes.data));
+            localStorage.setItem('admin_reports_cache', JSON.stringify(reportsRes.data));
+            localStorage.setItem('admin_cache_time', Date.now().toString());
+        } catch (err) {
+            console.error("Background fetch failed", err);
         }
     };
 
@@ -544,7 +585,7 @@ const AdminDashboard = () => {
     if (loading) {
         return (
             <div className="min-h-screen bg-dark-bg flex items-center justify-center">
-                <div className="w-12 h-12 border-4 border-accent-purple/30 border-t-accent-purple rounded-full animate-spin"></div>
+                <LoadingSpinner size="lg" />
             </div>
         );
     }

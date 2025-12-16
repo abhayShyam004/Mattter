@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Users, Clock, CheckCircle, Trash2, ArrowLeft, Search, ChevronDown, ChevronUp, Star } from 'lucide-react';
 import { API_BASE_URL } from '../config';
 import RatingModal from '../components/RatingModal';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 const YourCatalysts = () => {
     const navigate = useNavigate();
@@ -24,7 +25,7 @@ const YourCatalysts = () => {
     const [matchedToDelete, setMatchedToDelete] = useState(null);
 
     useEffect(() => {
-        fetchBookings();
+        fetchDashboardData();
     }, []);
 
     // Filter pending requests based on search
@@ -59,61 +60,40 @@ const YourCatalysts = () => {
         }
     }, [searchMatched, matchedCatalysts]);
 
-    const fetchBookings = async () => {
+    const fetchDashboardData = async () => {
         setLoading(true);
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch(`${API_BASE_URL}/api/bookings/`, {
-                headers: {
-                    'Authorization': `Token ${token}`
-                }
-            });
+            const headers = { 'Authorization': `Token ${token}` };
 
-            if (response.ok) {
-                const data = await response.json();
-                console.log('Bookings data:', data);
+            // TWO optimized API calls exactly as requested
+            const [pendingRes, matchedRes] = await Promise.all([
+                fetch(`${API_BASE_URL}/api/bookings/pending/`, { headers }),
+                fetch(`${API_BASE_URL}/api/bookings/matched/`, { headers })
+            ]);
 
-                // Separate bookings by status
-                const pending = data.filter(b => b.status === 'REQUESTED');
-                const matched = data.filter(b => b.status === 'CONFIRMED' || b.status === 'COMPLETED');
+            if (pendingRes.ok && matchedRes.ok) {
+                const pending = await pendingRes.json();
+                const matched = await matchedRes.json();
 
                 setPendingRequests(pending);
                 setMatchedCatalysts(matched);
                 setFilteredPending(pending);
                 setFilteredMatched(matched);
 
-                // Check existing ratings for matched catalysts
-                checkExistingRatings(matched);
-            }
-        } catch (error) {
-            console.error('Error fetching bookings:', error);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const checkExistingRatings = async (bookings) => {
-        try {
-            const token = localStorage.getItem('token');
-            const response = await fetch(`${API_BASE_URL}/api/ratings/`, {
-                headers: {
-                    'Authorization': `Token ${token}`
-                }
-            });
-
-            if (response.ok) {
-                const ratings = await response.json();
-                // Create a map of catalyst_id to rating for quick lookup
+                // Extract ratings from matched data
                 const ratingsMap = {};
-                ratings.forEach(rating => {
-                    if (rating.catalyst && rating.catalyst.id) {
-                        ratingsMap[rating.catalyst.id] = rating;
+                matched.forEach(booking => {
+                    if (booking.rating && booking.catalyst?.id) {
+                        ratingsMap[booking.catalyst.id] = booking.rating;
                     }
                 });
                 setCatalystRatings(ratingsMap);
             }
         } catch (error) {
-            console.error('Error fetching ratings:', error);
+            console.error('Error:', error);
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -131,7 +111,7 @@ const YourCatalysts = () => {
             });
 
             if (response.ok) {
-                await fetchBookings();
+                await fetchDashboardData();
             } else {
                 alert('Failed to delete request');
             }
@@ -203,16 +183,36 @@ const YourCatalysts = () => {
         setShowRatingModal(true);
     };
 
+    const fetchRatingsOnly = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`${API_BASE_URL}/api/ratings/`, {
+                headers: { 'Authorization': `Token ${token}` }
+            });
+
+            if (response.ok) {
+                const ratings = await response.json();
+                const ratingsMap = {};
+                ratings.forEach(rating => {
+                    if (rating.catalyst && rating.catalyst.id) {
+                        ratingsMap[rating.catalyst.id] = rating;
+                    }
+                });
+                setCatalystRatings(ratingsMap);
+            }
+        } catch (error) {
+            console.error('Error refreshing ratings:', error);
+        }
+    };
+
     const handleRatingSubmitted = async () => {
-        // Refresh ratings after submission
-        const currentMatched = [...matchedCatalysts];
-        await checkExistingRatings(currentMatched);
+        await fetchRatingsOnly();
     };
 
     if (loading) {
         return (
             <div className="min-h-screen flex items-center justify-center">
-                <div className="w-12 h-12 border-4 border-accent-purple/30 border-t-accent-purple rounded-full animate-spin" />
+                <LoadingSpinner size="lg" />
             </div>
         );
     }
@@ -354,7 +354,7 @@ const YourCatalysts = () => {
                                                             title="Delete request"
                                                         >
                                                             {deletingId === booking.id ? (
-                                                                <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                                                                <LoadingSpinner size="sm" color="text-red-400" />
                                                             ) : (
                                                                 <Trash2 className="w-4 h-4" />
                                                             )}
@@ -576,7 +576,7 @@ const YourCatalysts = () => {
                             >
                                 {deletingId === matchedToDelete.id ? (
                                     <>
-                                        <div className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                                        <LoadingSpinner size="sm" color="text-white" />
                                         Removing...
                                     </>
                                 ) : (

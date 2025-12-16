@@ -85,8 +85,11 @@ class CustomAuthToken(ObtainAuthToken):
             }
         }
         
-        # Add role if profile exists
-        if hasattr(user, 'profile'):
-            response_data['user']['role'] = user.profile.role
+        # Use select_related to fetch profile in same query
+        try:
+            profile = Profile.objects.select_related('user').get(user=user)
+            response_data['user']['role'] = profile.role
+        except Profile.DoesNotExist:
+            pass
             
         return Response(response_data)

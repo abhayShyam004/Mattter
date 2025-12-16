@@ -12,6 +12,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import SeekerOnboarding from './pages/SeekerOnboarding';
 import AdminDashboard from './pages/AdminDashboard';
+import SpinnerShowroom from './pages/SpinnerShowroom';
 
 function App() {
     return (
@@ -32,6 +33,8 @@ function App() {
                             <AdminDashboard />
                         </ProtectedRoute>
                     } />
+
+                    <Route path="/spinners" element={<SpinnerShowroom />} />
 
                     <Route path="/" element={<Layout />}>
                         <Route index element={<LandingPage />} />

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Star, X, Send } from 'lucide-react';
+import { X, Star } from 'lucide-react';
 import { API_BASE_URL } from '../config';
+import LoadingSpinner from './LoadingSpinner';
 
 const RatingModal = ({ catalyst, booking, existingRating, onClose, onRatingSubmitted }) => {
     const [rating, setRating] = useState(existingRating?.rating || 0);
@@ -170,7 +171,7 @@ const RatingModal = ({ catalyst, booking, existingRating, onClose, onRatingSubmi
                     >
                         {submitting ? (
                             <>
-                                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                                <LoadingSpinner size="sm" color="text-white" />
                                 {existingRating ? 'Updating...' : 'Submitting...'}
                             </>
                         ) : (

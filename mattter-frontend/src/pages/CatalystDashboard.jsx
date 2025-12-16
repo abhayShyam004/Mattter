@@ -4,6 +4,7 @@ import { User, MapPin, Heart, Calendar, Image, X, Plus, Check, Clock, Sparkles, 
 import { API_BASE_URL } from '../config';
 import ReportModal from '../components/ReportModal';
 import OnboardingModal from '../components/OnboardingModal';
+import LoadingSpinner from '../components/LoadingSpinner';
 const CatalystDashboard = () => {
     const { user } = useAuth();
     const [profile, setProfile] = useState(null);
@@ -360,7 +361,7 @@ const CatalystDashboard = () => {
     if (loading) {
         return (
             <div className="min-h-screen flex items-center justify-center">
-                <div className="w-12 h-12 border-4 border-accent-purple/30 border-t-accent-purple rounded-full animate-spin"></div>
+                <LoadingSpinner size="lg" />
             </div>
         );
     }
@@ -799,21 +800,18 @@ const CatalystDashboard = () => {
                                         : 'bg-gradient-to-r from-accent-purple to-accent-pink'
                                         }`}
                                 >
-                                    {saving ? (
-                                        <>
-                                            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                                            Saving...
-                                        </>
-                                    ) : saved ? (
+                                    {saved ? (
                                         <>
                                             <Check className="w-5 h-5 animate-bounce" />
                                             Saved!
                                         </>
-                                    ) : (
+                                    ) : saving ? (
                                         <>
-                                            <Check className="w-5 h-5" />
-                                            Save Profile
+                                            <LoadingSpinner size="sm" color="text-white" />
+                                            Saving...
                                         </>
+                                    ) : (
+                                        'Save Profile'
                                     )}
                                 </button>
                             </div>

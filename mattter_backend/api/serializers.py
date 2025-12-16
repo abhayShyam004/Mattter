@@ -48,8 +48,8 @@ class ProfileSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'user', 'role', 'gender', 'age', 'bio', 'bio_short', 'is_active',
             'latitude', 'longitude', 'address',
-            'hourly_rate', 'specializations', 'portfolio_images',
-            'style_goals', 'preferences', 'average_rating', 'rating_count'
+            'hourly_rate', 'specializations',
+            'average_rating', 'rating_count'
         ]
         read_only_fields = ['id', 'user', 'average_rating', 'rating_count']
 
@@ -64,6 +64,49 @@ class ServiceSerializer(serializers.ModelSerializer):
         model = Service
         fields = '__all__'
         read_only_fields = ['catalyst']
+
+class SimpleProfileSerializer(serializers.ModelSerializer):
+    """Lightweight profile serializer without images"""
+    class Meta:
+        model = Profile
+        fields = [
+            'id', 'role', 'gender', 'age', 'bio_short', 
+            'hourly_rate', 'specializations', 'average_rating', 'rating_count'
+        ]
+
+class SimpleUserWithProfileSerializer(serializers.ModelSerializer):
+    """User serializer with lightweight profile"""
+    profile = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'email', 'first_name', 'last_name', 'profile']
+    
+    def get_profile(self, obj):
+        try:
+            profile = obj.profile
+            return {
+                'id': profile.id,
+                'role': profile.role,
+                'gender': profile.gender,
+                'age': profile.age,
+                'bio_short': profile.bio_short,
+                'specializations': profile.specializations,
+                'average_rating': str(profile.average_rating),
+                'rating_count': profile.rating_count,
+            }
+        except Profile.DoesNotExist:
+            return None
+
+class SimpleBookingSerializer(serializers.ModelSerializer):
+    """Optimized booking serializer for lists"""
+    seeker = SimpleUserWithProfileSerializer(read_only=True)
+    catalyst = SimpleUserWithProfileSerializer(read_only=True)
+    service = ServiceSerializer(read_only=True)
+    
+    class Meta:
+        model = Booking
+        fields = '__all__'
 
 class BookingSerializer(serializers.ModelSerializer):
     # For reading: return nested user objects with profile data

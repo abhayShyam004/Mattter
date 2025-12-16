@@ -1,27 +1,25 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { XCircle, Send, MessageCircle, Info } from 'lucide-react';
-import axios from 'axios';
+import { X, Send, Clock, User, CheckCircle, Check } from 'lucide-react';
 import { API_BASE_URL } from '../config';
+import LoadingSpinner from './LoadingSpinner';
 
-const MessagingModal = ({ booking, onClose, currentUser }) => {
+const MessagingModal = ({ isOpen, onClose, recipientId, recipientName, recipientImage }) => {
     const [messages, setMessages] = useState([]);
     const [newMessage, setNewMessage] = useState('');
     const [loading, setLoading] = useState(true);
     const [sending, setSending] = useState(false);
     const messagesEndRef = useRef(null);
 
-    const otherUser = booking.seeker.id === currentUser.id ? booking.catalyst : booking.seeker;
-
     // Fetch messages
     const fetchMessages = async () => {
         try {
-            const response = await axios.get(`${API_BASE_URL}/api/messages/?booking_id=${booking.id}`);
+            const response = await axios.get(`${API_BASE_URL}/api/messages/?recipient_id=${recipientId}`);
             setMessages(response.data);
             setLoading(false);
 
             // Mark messages as read
             await axios.post(`${API_BASE_URL}/api/messages/mark_as_read/`, {
-                booking_id: booking.id
+                recipient_id: recipientId
             });
         } catch (error) {
             console.error('Error fetching messages:', error);
@@ -37,7 +35,7 @@ const MessagingModal = ({ booking, onClose, currentUser }) => {
         setSending(true);
         try {
             await axios.post(`${API_BASE_URL}/api/messages/`, {
-                booking: booking.id,
+                recipient: recipientId,
                 content: newMessage.trim()
             });
             setNewMessage('');
@@ -61,17 +59,24 @@ const MessagingModal = ({ booking, onClose, currentUser }) => {
 
     // Fetch messages on mount
     useEffect(() => {
-        fetchMessages();
-    }, []);
+        if (isOpen) {
+            fetchMessages();
+        }
+    }, [isOpen, recipientId]);
 
     // Poll for new messages every 5 seconds
     useEffect(() => {
-        const interval = setInterval(() => {
-            fetchMessages();
-        }, 5000);
+        let interval;
+        if (isOpen) {
+            interval = setInterval(() => {
+                fetchMessages();
+            }, 5000);
+        }
 
         return () => clearInterval(interval);
-    }, []);
+    }, [isOpen, recipientId]);
+
+    if (!isOpen) return null;
 
     return (
         <div
@@ -85,10 +90,10 @@ const MessagingModal = ({ booking, onClose, currentUser }) => {
                 {/* Header */}
                 <div className="flex items-center justify-between p-6 border-b border-dark-border">
                     <div className="flex items-center gap-3">
-                        <MessageCircle className="w-6 h-6 text-accent-purple" />
+                        <User className="w-6 h-6 text-accent-purple" />
                         <div>
                             <h2 className="text-xl font-bold text-text-primary">
-                                Chat with {otherUser.username}
+                                Chat with {recipientName}
                             </h2>
                             <p className="text-sm text-text-secondary">Messages refresh every 5 seconds</p>
                         </div>
@@ -97,14 +102,14 @@ const MessagingModal = ({ booking, onClose, currentUser }) => {
                         onClick={onClose}
                         className="text-text-secondary hover:text-text-primary transition-colors"
                     >
-                        <XCircle className="w-6 h-6" />
+                        <X className="w-6 h-6" />
                     </button>
                 </div>
 
                 {/* Auto-delete notice */}
                 <div className="px-6 pt-4 pb-2">
                     <div className="flex items-start gap-2 bg-accent-purple/10 border border-accent-purple/30 rounded-lg p-3">
-                        <Info className="w-4 h-4 text-accent-purple mt-0.5" />
+                        <Clock className="w-4 h-4 text-accent-purple mt-0.5" />
                         <p className="text-xs text-text-secondary">
                             Messages automatically delete after 1 week for privacy
                         </p>
@@ -115,16 +120,16 @@ const MessagingModal = ({ booking, onClose, currentUser }) => {
                 <div className="flex-1 overflow-y-auto p-6 space-y-4">
                     {loading ? (
                         <div className="flex items-center justify-center py-8">
-                            <div className="w-6 h-6 border-3 border-accent-purple/30 border-t-accent-purple rounded-full animate-spin"></div>
+                            <LoadingSpinner size="md" />
                         </div>
                     ) : messages.length === 0 ? (
                         <div className="text-center py-8 text-text-secondary">
-                            <MessageCircle className="w-12 h-12 mx-auto mb-2 opacity-30" />
+                            <User className="w-12 h-12 mx-auto mb-2 opacity-30" />
                             <p>No messages yet. Start the conversation!</p>
                         </div>
                     ) : (
                         messages.map((message) => {
-                            const isCurrentUser = message.sender.id === currentUser.id;
+                            const isCurrentUser = message.sender.id === currentUser.id; // Assuming currentUser is still available or passed
                             return (
                                 <div
                                     key={message.id}
@@ -168,7 +173,7 @@ const MessagingModal = ({ booking, onClose, currentUser }) => {
                             className="px-6 py-3 bg-gradient-to-r from-accent-purple to-accent-pink rounded-xl text-white font-medium hover:shadow-lg hover:shadow-accent-purple/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                         >
                             {sending ? (
-                                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                                <LoadingSpinner size="sm" color="text-white" />
                             ) : (
                                 <Send className="w-5 h-5" />
                             )}
